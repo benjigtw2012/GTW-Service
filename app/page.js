@@ -35,8 +35,16 @@ const handleItems = ["Espag Handle", "Cockspur", "Tilt & Turn", "Other Handle"];
 const lockItems = ["Multipoint Lock", "Gearbox Only", "Window Lock", "Other Lock / Mechanism"];
 const otherItems = ["Restrictor", "Gasket / Seal", "Letterbox", "Trickle Vent", "Other Component"];
 
-const glassThicknessOptions = ["4/10/4 = 20mm", "4/16/4 = 24mm", "6/16/6 = 28mm", "Other"];
-const spacerBarOptions = ["Black Spacer", "Silver Spacer", "Warm Edge Spacer", "Other"];
+const paneThicknessOptions = ["4mm", "6mm", "6.4mm Laminated", "8mm", "10mm", "Other"];
+const spacerSizeOptions = ["6mm", "8mm", "10mm", "12mm", "14mm", "16mm", "18mm", "20mm", "Other"];
+const spacerBarOptions = [
+  "Black Spacer",
+  "Silver Spacer",
+  "Warm Edge Spacer",
+  "Black Swiss Spacer",
+  "Ali Spacer (Any Colour)",
+  "Other"
+];
 const decorativeBarOptions = ["None", "Black Swiss Bars", "All Colour Ali Bars", "Georgian Bars", "Lead Work", "Other"];
 const glassTypeOptions = ["Clear", "Low-E", "Toughened", "Laminated", "Pattern", "Obscure", "Other"];
 
@@ -50,7 +58,10 @@ function emptyGlassRow() {
     location: "",
     width: "",
     height: "",
-    thickness: "4/16/4 = 24mm",
+    outerPane: "4mm",
+    spacerSize: "16mm",
+    innerPane: "4mm",
+    overallThickness: "24mm",
     type: "Clear",
     spacerBar: "Black Spacer",
     decorativeBar: "None",
@@ -163,6 +174,16 @@ function downloadTextFile(filename, content, type = "application/json") {
   URL.revokeObjectURL(url);
 }
 
+function mmNumber(value) {
+  const match = String(value || "").match(/[0-9.]+/);
+  return match ? Number(match[0]) : 0;
+}
+
+function calculateOverallThickness(outerPane, spacerSize, innerPane) {
+  const total = mmNumber(outerPane) + mmNumber(spacerSize) + mmNumber(innerPane);
+  return total ? `${total}mm` : "";
+}
+
 function getHardwareLines(room) {
   const lines = [];
   const addGroup = (name, group) => {
@@ -181,7 +202,7 @@ function buildOfficeEmail(survey, summary) {
   const { job, glassRows, rooms, engineerNotes, sketchNotes, office } = survey;
   const glass = glassRows
     .filter((g) => [g.location, g.width, g.height, g.notes].some(Boolean))
-    .map((g, i) => `${i + 1}. ${g.location || "No location"} - ${g.width} x ${g.height} - ${g.thickness} - ${g.type} - ${g.spacerBar} - ${g.decorativeBar} - ${g.pattern} - ${g.notes}`)
+    .map((g, i) => `${i + 1}. ${g.location || "No location"} - ${g.width} x ${g.height} - ${g.outerPane}/${g.spacerSize}/${g.innerPane} = ${g.overallThickness} - ${g.type} - ${g.spacerBar} - ${g.decorativeBar} - ${g.pattern} - ${g.notes}`)
     .join("%0D%0A");
 
   const hardware = rooms
@@ -250,7 +271,18 @@ export default function MobileWindowDoorSurveyApp() {
   const updateGlass = (id, key, value) => {
     setSurvey((prev) => ({
       ...prev,
-      glassRows: prev.glassRows.map((row) => (row.id === id ? { ...row, [key]: value } : row)),
+      glassRows: prev.glassRows.map((row) => {
+        if (row.id !== id) return row;
+        const updated = { ...row, [key]: value };
+        if (["outerPane", "spacerSize", "innerPane"].includes(key)) {
+          updated.overallThickness = calculateOverallThickness(
+            key === "outerPane" ? value : updated.outerPane,
+            key === "spacerSize" ? value : updated.spacerSize,
+            key === "innerPane" ? value : updated.innerPane
+          );
+        }
+        return updated;
+      }),
     }));
   };
 
@@ -398,9 +430,12 @@ export default function MobileWindowDoorSurveyApp() {
                     <Field label="Width mm" value={row.width} onChange={(v) => updateGlass(row.id, "width", v)} inputMode="numeric" />
                     <Field label="Height mm" value={row.height} onChange={(v) => updateGlass(row.id, "height", v)} inputMode="numeric" />
                   </div>
-                  <SelectField label="Unit Thickness" value={row.thickness} onChange={(v) => updateGlass(row.id, "thickness", v)} options={glassThicknessOptions} />
+                  <SelectField label="Outer Pane" value={row.outerPane} onChange={(v) => updateGlass(row.id, "outerPane", v)} options={paneThicknessOptions} />
+                  <SelectField label="Spacer Size" value={row.spacerSize} onChange={(v) => updateGlass(row.id, "spacerSize", v)} options={spacerSizeOptions} />
+                  <SelectField label="Inner Pane" value={row.innerPane} onChange={(v) => updateGlass(row.id, "innerPane", v)} options={paneThicknessOptions} />
+                  <Field label="Overall Thickness" value={row.overallThickness} onChange={(v) => updateGlass(row.id, "overallThickness", v)} placeholder="Auto calculated" />
                   <SelectField label="Glass Type" value={row.type} onChange={(v) => updateGlass(row.id, "type", v)} options={glassTypeOptions} />
-                  <SelectField label="Spacer Bar" value={row.spacerBar} onChange={(v) => updateGlass(row.id, "spacerBar", v)} options={spacerBarOptions} />
+                  <SelectField label="Spacer Bar Type" value={row.spacerBar} onChange={(v) => updateGlass(row.id, "spacerBar", v)} options={spacerBarOptions} />
                   <SelectField label="Bars / Lead" value={row.decorativeBar} onChange={(v) => updateGlass(row.id, "decorativeBar", v)} options={decorativeBarOptions} />
                   <Field label="Pattern / Design" value={row.pattern} onChange={(v) => updateGlass(row.id, "pattern", v)} />
                   <Field label="Notes" value={row.notes} onChange={(v) => updateGlass(row.id, "notes", v)} />
