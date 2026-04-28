@@ -55,8 +55,6 @@ const hingeItems = [
   "Top Hung 10\"",
   "Top Hung 12\"",
   "Top Hung 16\"",
-  "Top Hung 20\"",
-  "Top Hung 24\"",
   "Side Hung 12\"",
   "Side Hung 16\"",
   "12\" Egress",
@@ -529,7 +527,7 @@ export default function MobileWindowDoorSurveyApp() {
       `}</style>
 
       <div className="mx-auto max-w-3xl space-y-4">
-        <div className="sticky top-0 z-10 rounded-3xl border border-slate-200 bg-white/95 p-4 shadow-sm backdrop-blur print:static print:border-black print:shadow-none">
+        <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm print:border-black print:shadow-none">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h1 className="text-2xl font-black leading-tight">Guernsey Trade Windows</h1>
