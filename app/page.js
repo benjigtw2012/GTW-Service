@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+"use client";
+
+import React, { useMemo, useRef, useState } from "react";
 import {
   Plus,
   Trash2,
@@ -26,15 +28,28 @@ const CardContent = ({ children, className="" }) => (
   <div className={className}>{children}</div>
 );
 
-const Button = ({ children, className="", onClick, variant, ...props }) => (
-  <button
-    onClick={onClick}
-    className={`bg-slate-900 text-white px-4 py-2 ${className}`}
-    {...props}
-  >
-    {children}
-  </button>
-);
+const Button = ({ children, className="", onClick, variant, asChild, ...props }) => {
+  const base = variant === "outline"
+    ? "border border-slate-300 bg-white text-slate-900 px-4 py-2"
+    : "bg-slate-900 text-white px-4 py-2";
+
+  if (asChild && React.isValidElement(children)) {
+    return React.cloneElement(children, {
+      className: `${base} ${className} inline-flex items-center justify-center`,
+      ...props,
+    });
+  }
+
+  return (
+    <button
+      onClick={onClick}
+      className={`${base} ${className} inline-flex items-center justify-center`}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+};
 
 const STORAGE_KEY = "gtw-window-door-survey-v2";
 
@@ -49,9 +64,41 @@ const hingeItems = [
   "16\" Egress",
 ];
 
-const handleItems = ["Espag Handle", "Cockspur", "Tilt & Turn", "Other Handle"];
-const lockItems = ["Multipoint Lock", "Gearbox Only", "Window Lock", "Other Lock / Mechanism"];
-const otherItems = ["Restrictor", "Gasket / Seal", "Letterbox", "Trickle Vent", "Other Component"];
+const handleItems = [
+  "White Espag Handle",
+  "Black Espag Handle",
+  "Chrome Espag Handle",
+  "Gold Espag Handle",
+  "Cockspur Handle",
+  "Tilt & Turn Handle",
+  "Patio Handle",
+  "Door Handle Set",
+  "Other Handle"
+];
+
+const lockItems = [
+  "Multipoint Lock",
+  "Gearbox Only",
+  "Window Lock",
+  "Shootbolt Gearbox",
+  "Espag Mechanism",
+  "Door Cylinder",
+  "Patio Door Lock",
+  "Other Lock / Mechanism"
+];
+
+const otherItems = [
+  "Restrictor",
+  "Gasket / Seal",
+  "Letterbox",
+  "Trickle Vent",
+  "Door Hinge",
+  "Keeps",
+  "Striker Plate",
+  "Drainage Cap",
+  "Screw Cover Cap",
+  "Other Component"
+];
 
 const paneThicknessOptions = ["4mm", "6mm", "6.4mm Laminated", "8mm", "10mm", "Other"];
 const spacerSizeOptions = ["6mm", "8mm", "10mm", "12mm", "14mm", "16mm", "18mm", "20mm", "Other"];
@@ -107,6 +154,7 @@ const initialSurvey = {
   rooms: [emptyRoom(), emptyRoom()],
   engineerNotes: "",
   sketchNotes: "",
+  sketchImage: "",
   office: { quoteRef: "", totalJobTime: "" },
   photos: [],
 };
@@ -242,7 +290,9 @@ export default function MobileWindowDoorSurveyApp() {
     }
   });
 
-  const { job, glassRows, rooms, engineerNotes, sketchNotes, office, photos } = survey;
+  const { job, glassRows, rooms, engineerNotes, sketchNotes, sketchImage, office, photos } = survey;
+  const canvasRef = useRef(null);
+  const isDrawingRef = useRef(false);
 
   const summary = useMemo(() => {
     const totalHardwareQty = rooms.reduce((sum, room) => {
@@ -342,6 +392,61 @@ export default function MobileWindowDoorSurveyApp() {
   };
 
   const removePhoto = (id) => setSurvey((prev) => ({ ...prev, photos: prev.photos.filter((p) => p.id !== id) }));
+
+  const getCanvasPoint = (event) => {
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const touch = event.touches?.[0];
+    const clientX = touch ? touch.clientX : event.clientX;
+    const clientY = touch ? touch.clientY : event.clientY;
+    return {
+      x: ((clientX - rect.left) / rect.width) * canvas.width,
+      y: ((clientY - rect.top) / rect.height) * canvas.height,
+    };
+  };
+
+  const saveSketch = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    setSurvey((prev) => ({ ...prev, sketchImage: canvas.toDataURL("image/png") }));
+  };
+
+  const startDrawing = (event) => {
+    event.preventDefault();
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    const point = getCanvasPoint(event);
+    isDrawingRef.current = true;
+    ctx.lineWidth = 3;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "#111827";
+    ctx.beginPath();
+    ctx.moveTo(point.x, point.y);
+  };
+
+  const draw = (event) => {
+    if (!isDrawingRef.current) return;
+    event.preventDefault();
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    const point = getCanvasPoint(event);
+    ctx.lineTo(point.x, point.y);
+    ctx.stroke();
+  };
+
+  const stopDrawing = () => {
+    if (!isDrawingRef.current) return;
+    isDrawingRef.current = false;
+    saveSketch();
+  };
+
+  const clearSketch = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setSurvey((prev) => ({ ...prev, sketchImage: "" }));
+  };
 
   return (
     <div className="min-h-screen bg-slate-100 px-3 py-4 text-slate-900 print:bg-white sm:px-6">
@@ -518,6 +623,29 @@ export default function MobileWindowDoorSurveyApp() {
               <h2 className="text-xl font-black">Photos / Sketch / Lead / Georgian Bar Notes</h2>
             </div>
             <TextArea label="Sketch Description" value={sketchNotes} onChange={(v) => setSurvey((p) => ({ ...p, sketchNotes: v }))} placeholder="Describe bar layout or lead pattern." />
+            <div className="rounded-3xl border border-slate-300 bg-white p-3">
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="font-black">Sketch Pad</h3>
+                  <p className="text-xs text-slate-500">Use finger, stylus or Apple Pencil for Georgian bars, lead layouts or notes.</p>
+                </div>
+                <button onClick={clearSketch} className="rounded-2xl border border-slate-300 px-4 py-3 text-sm font-bold text-slate-700 no-print">Clear</button>
+              </div>
+              <canvas
+                ref={canvasRef}
+                width={900}
+                height={520}
+                onMouseDown={startDrawing}
+                onMouseMove={draw}
+                onMouseUp={stopDrawing}
+                onMouseLeave={stopDrawing}
+                onTouchStart={startDrawing}
+                onTouchMove={draw}
+                onTouchEnd={stopDrawing}
+                className="h-72 w-full touch-none rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50"
+              />
+              {sketchImage && <p className="mt-2 text-xs font-bold text-green-700">Sketch saved with this survey.</p>}
+            </div>
             <label className="block rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50 p-8 text-center text-base font-bold text-slate-700 no-print">
               <Camera className="mx-auto mb-3 h-10 w-10" />
               Tap to take photos or upload from device
