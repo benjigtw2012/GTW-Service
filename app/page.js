@@ -1,4 +1,3 @@
-"use client";
 import React, { useMemo, useState } from "react";
 import {
   Plus,
@@ -16,8 +15,24 @@ import {
   RotateCcw,
   Copy,
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+// Simple replacements for Card and Button (no external UI libs needed)
+const Card = ({ children, className="" }) => (
+  <div className={`rounded-3xl border border-slate-200 bg-white ${className}`}>{children}</div>
+);
+
+const CardContent = ({ children, className="" }) => (
+  <div className={className}>{children}</div>
+);
+
+const Button = ({ children, className="", onClick, variant, ...props }) => (
+  <button
+    onClick={onClick}
+    className={`bg-slate-900 text-white px-4 py-2 ${className}`}
+    {...props}
+  >
+    {children}
+  </button>
+);
 
 const STORAGE_KEY = "gtw-window-door-survey-v2";
 
