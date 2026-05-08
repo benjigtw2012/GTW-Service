@@ -1083,7 +1083,8 @@ const removeHandle = (roomId, handleId) => {
     ))}
   </div>
 </div>
-                <QtyGrid title="Locks / Mechanisms" items={lockItems} values={activeRoom.locks} onChange={(item, v) => updateRoomQty(activeRoom.id, "locks", item, v)} />
+
+<QtyGrid title="Locks / Mechanisms" items={lockItems} values={activeRoom.locks} onChange={(item, v) => updateRoomQty(activeRoom.id, "locks", item, v)} />
                 <QtyGrid title="Other Components" items={otherItems} values={activeRoom.other} onChange={(item, v) => updateRoomQty(activeRoom.id, "other", item, v)} />
 
                 <TextArea label="Room Notes" value={activeRoom.notes} onChange={(v) => updateRoomNotes(activeRoom.id, v)} placeholder="Anything unusual for this room/area" />
