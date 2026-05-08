@@ -690,8 +690,6 @@ const removeHandle = (roomId, handleId) => {
   }));
 };
 
-const addHinge = (roomId) => {
-      
   const addHinge = (roomId) => {
     setSurvey((prev) => ({
       ...prev,
