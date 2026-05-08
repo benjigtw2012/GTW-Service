@@ -39,7 +39,8 @@ const handleColourOptions = {
   "Other Handle": ["White", "Black", "Chrome", "Gold", "Other"],
 };
 
-const lockItems = [
+const lockTypeOptions = [
+  "",
   "Multipoint Lock",
   "Gearbox Only",
   "Window Lock",
@@ -49,6 +50,17 @@ const lockItems = [
   "Patio Door Lock",
   "Other Lock / Mechanism",
 ];
+
+const lockDetailOptions = {
+  "Multipoint Lock": ["GU", "Yale", "Mila", "Fullex", "Other"],
+  "Gearbox Only": ["35mm", "45mm", "55mm", "Other"],
+  "Window Lock": ["Inline", "Offset", "Cockspur", "Other"],
+  "Shootbolt Gearbox": ["Mila", "Saracen", "Other"],
+  "Espag Mechanism": ["200mm", "400mm", "600mm", "Other"],
+  "Door Cylinder": ["Euro", "Thumbturn", "Anti Snap", "Other"],
+  "Patio Door Lock": ["Hook", "Slider", "Other"],
+  "Other Lock / Mechanism": ["Other"],
+};
 
 const otherItems = [
   "Restrictor",
@@ -114,7 +126,7 @@ function emptyRoom() {
     name: "",
     hinges: [],
     handles: [],
-    locks: qtyMap(lockItems),
+    locks: [],
     other: qtyMap(otherItems),
     notes: "",
   };
@@ -385,6 +397,77 @@ function HandlesSection({ room, addHandle, updateHandle, removeHandle }) {
             </div>
             <button onClick={() => removeHandle(room.id, handle.id)} className="mt-3 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-bold text-red-600 no-print">
               <Trash2 className="mr-1 inline h-4 w-4" /> Remove Handle
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LocksSection({ room, addLock, updateLock, removeLock }) {
+  const locks = Array.isArray(room.locks) ? room.locks : [];
+
+  return (
+    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h4 className="text-base font-black uppercase tracking-wide text-slate-700">
+          Locks / Mechanisms
+        </h4>
+
+        <button
+          onClick={() => addLock(room.id)}
+          className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white no-print"
+        >
+          <Plus className="mr-1 inline h-4 w-4" />
+          Add Lock
+        </button>
+      </div>
+
+      {locks.length === 0 && (
+        <p className="rounded-2xl bg-white p-4 text-sm font-bold text-slate-500">
+          No locks added yet.
+        </p>
+      )}
+
+      <div className="space-y-3">
+        {locks.map((lock) => (
+          <div key={lock.id} className="rounded-2xl bg-white p-4 shadow-sm">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+
+              <SelectField
+                label="Lock Type"
+                value={lock.type}
+                onChange={(v) => updateLock(room.id, lock.id, "type", v)}
+                options={lockTypeOptions}
+              />
+
+              {lock.type && (
+                <SelectField
+                  label="Detail"
+                  value={lock.detail}
+                  onChange={(v) => updateLock(room.id, lock.id, "detail", v)}
+                  options={["", ...(lockDetailOptions[lock.type] || [])]}
+                />
+              )}
+
+              {lock.detail && (
+                <Field
+                  label="Quantity"
+                  value={lock.quantity}
+                  onChange={(v) => updateLock(room.id, lock.id, "quantity", v)}
+                  inputMode="numeric"
+                  placeholder="Qty"
+                />
+              )}
+            </div>
+
+            <button
+              onClick={() => removeLock(room.id, lock.id)}
+              className="mt-3 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-bold text-red-600 no-print"
+            >
+              <Trash2 className="mr-1 inline h-4 w-4" />
+              Remove Lock
             </button>
           </div>
         ))}
@@ -672,7 +755,66 @@ export default function MobileWindowDoorSurveyApp() {
       ),
     }));
   };
+const addLock = (roomId) => {
+  setSurvey((prev) => ({
+    ...prev,
+    rooms: prev.rooms.map((room) =>
+      room.id === roomId
+        ? {
+            ...room,
+            locks: [
+              ...(Array.isArray(room.locks) ? room.locks : []),
+              { id: makeId(), type: "", detail: "", quantity: "" },
+            ],
+          }
+        : room
+    ),
+  }));
+};
 
+const updateLock = (roomId, lockId, key, value) => {
+  setSurvey((prev) => ({
+    ...prev,
+    rooms: prev.rooms.map((room) =>
+      room.id === roomId
+        ? {
+            ...room,
+            locks: (Array.isArray(room.locks) ? room.locks : []).map((lock) => {
+              if (lock.id !== lockId) return lock;
+
+              const updated = { ...lock, [key]: value };
+
+              if (key === "type") {
+                updated.detail = "";
+                updated.quantity = "";
+              }
+
+              if (key === "detail") {
+                updated.quantity = "";
+              }
+
+              return updated;
+            }),
+          }
+        : room
+    ),
+  }));
+};
+
+const removeLock = (roomId, lockId) => {
+  setSurvey((prev) => ({
+    ...prev,
+    rooms: prev.rooms.map((room) =>
+      room.id === roomId
+        ? {
+            ...room,
+            locks: (Array.isArray(room.locks) ? room.locks : []).filter((lock) => lock.id !== lockId),
+          }
+        : room
+    ),
+  }));
+};
+  
   const updateRoomNotes = (id, value) => {
     setSurvey((prev) => ({ ...prev, rooms: prev.rooms.map((r) => (r.id === id ? { ...r, notes: value } : r)) }));
   };
@@ -827,7 +969,14 @@ export default function MobileWindowDoorSurveyApp() {
 
                 <HingesSection room={activeRoom} addHinge={addHinge} updateHinge={updateHinge} removeHinge={removeHinge} />
                 <HandlesSection room={activeRoom} addHandle={addHandle} updateHandle={updateHandle} removeHandle={removeHandle} />
-                <QtyGrid title="Locks / Mechanisms" items={lockItems} values={activeRoom.locks} onChange={(item, v) => updateRoomQty(activeRoom.id, "locks", item, v)} />
+                    
+                <LocksSection
+  room={activeRoom}
+  addLock={addLock}
+  updateLock={updateLock}
+  removeLock={removeLock}
+/>
+    
                 <QtyGrid title="Other Components" items={otherItems} values={activeRoom.other} onChange={(item, v) => updateRoomQty(activeRoom.id, "other", item, v)} />
                 <TextArea label="Room Notes" value={activeRoom.notes} onChange={(v) => updateRoomNotes(activeRoom.id, v)} placeholder="Anything unusual for this room/area" />
               </div>
