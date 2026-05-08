@@ -30,17 +30,16 @@ const hingeSizeOptions = {
   Egress: ["12 inch", "16 inch"],
 };
 
-const handleItems = [
-  "White Espag Handle",
-  "Black Espag Handle",
-  "Chrome Espag Handle",
-  "Gold Espag Handle",
-  "Cockspur Handle",
-  "Tilt & Turn Handle",
-  "Patio Handle",
-  "Door Handle Set",
-  "Other Handle",
-];
+const handleTypeOptions = ["", "Espag Handle", "Cockspur Handle", "Tilt & Turn Handle", "Patio Handle", "Door Handle Set", "Other Handle"];
+
+const handleColourOptions = {
+  "Espag Handle": ["White", "Black", "Chrome", "Gold"],
+  "Cockspur Handle": ["White", "Black", "Chrome", "Gold"],
+  "Tilt & Turn Handle": ["White", "Black", "Chrome"],
+  "Patio Handle": ["White", "Black", "Chrome", "Gold"],
+  "Door Handle Set": ["White", "Black", "Chrome", "Gold"],
+  "Other Handle": ["White", "Black", "Chrome", "Gold", "Other"],
+};
 
 const lockItems = [
   "Multipoint Lock",
@@ -116,7 +115,7 @@ function emptyRoom() {
     id: makeId(),
     name: "",
     hinges: [],
-    handles: qtyMap(handleItems),
+    handles: [],
     locks: qtyMap(lockItems),
     other: qtyMap(otherItems),
     notes: "",
@@ -431,7 +430,13 @@ function getHardwareLines(room) {
     if (entries.length) lines.push(`${name}: ${entries.map(([item, qty]) => `${item} x ${qty}`).join(", ")}`);
   };
 
-  addGroup("Handles", room.handles);
+  if (Array.isArray(room.handles)) {
+  const handles = room.handles.filter((h) => h.type && h.colour && Number(h.quantity) > 0);
+
+  if (handles.length) {
+    lines.push(`Handles: ${handles.map((h) => `${h.colour} ${h.type} x ${h.quantity}`).join(", ")}`);
+  }
+}
   addGroup("Locks", room.locks);
   addGroup("Other", room.other);
 
@@ -486,10 +491,13 @@ export default function MobileWindowDoorSurveyApp() {
         ? room.hinges.reduce((s, h) => s + (Number(h.quantity) || 0), 0)
         : 0;
 
-      const groups = [room.handles, room.locks, room.other];
+      const handleTotal = Array.isArray(room.handles)
+  ? room.handles.reduce((s, h) => s + (Number(h.quantity) || 0), 0)
+  : 0;
 
-      return sum + hingeTotal + groups.reduce((s, group) => s + Object.values(group || {}).reduce((a, q) => a + (Number(q) || 0), 0), 0);
-    }, 0);
+const groups = [room.locks, room.other];
+
+      return sum + hingeTotal + handleTotal + groups.reduce((s, group) => s + Object.values(group || {}).reduce((a, q) => a + (Number(q) || 0), 0), 0);
 
     const parts = {};
 
@@ -504,13 +512,23 @@ export default function MobileWindowDoorSurveyApp() {
         });
       }
 
-      [room.handles, room.locks, room.other].forEach((group) => {
-        Object.entries(group || {}).forEach(([item, qty]) => {
-          const n = Number(qty) || 0;
-          if (n > 0) parts[item] = (parts[item] || 0) + n;
-        });
-      });
-    });
+      if (Array.isArray(room.handles)) {
+  room.handles.forEach((handle) => {
+    const n = Number(handle.quantity) || 0;
+
+    if (handle.type && handle.colour && n > 0) {
+      const item = `${handle.colour} ${handle.type}`;
+      parts[item] = (parts[item] || 0) + n;
+    }
+  });
+}
+
+[room.locks, room.other].forEach((group) => {
+  Object.entries(group || {}).forEach(([item, qty]) => {
+    const n = Number(qty) || 0;
+    if (n > 0) parts[item] = (parts[item] || 0) + n;
+  });
+});
 
     const glassCount = glassRows.filter((g) => [g.location, g.width, g.height, g.notes].some(Boolean)).length;
 
@@ -605,7 +623,72 @@ export default function MobileWindowDoorSurveyApp() {
       rooms: prev.rooms.map((room) => (room.id === id ? { ...room, [group]: { ...room[group], [item]: value } } : room)),
     }));
   };
+const addHandle = (roomId) => {
+  setSurvey((prev) => ({
+    ...prev,
+    rooms: prev.rooms.map((room) =>
+      room.id === roomId
+        ? {
+            ...room,
+            handles: [
+              ...(Array.isArray(room.handles) ? room.handles : []),
+              {
+                id: makeId(),
+                type: "",
+                colour: "",
+                quantity: "",
+              },
+            ],
+          }
+        : room
+    ),
+  }));
+};
 
+const updateHandle = (roomId, handleId, key, value) => {
+  setSurvey((prev) => ({
+    ...prev,
+    rooms: prev.rooms.map((room) =>
+      room.id === roomId
+        ? {
+            ...room,
+            handles: (Array.isArray(room.handles) ? room.handles : []).map((handle) => {
+              if (handle.id !== handleId) return handle;
+
+              const updated = { ...handle, [key]: value };
+
+              if (key === "type") {
+                updated.colour = "";
+                updated.quantity = "";
+              }
+
+              if (key === "colour") {
+                updated.quantity = "";
+              }
+
+              return updated;
+            }),
+          }
+        : room
+    ),
+  }));
+};
+
+const removeHandle = (roomId, handleId) => {
+  setSurvey((prev) => ({
+    ...prev,
+    rooms: prev.rooms.map((room) =>
+      room.id === roomId
+        ? {
+            ...room,
+            handles: (Array.isArray(room.handles) ? room.handles : []).filter(
+              (handle) => handle.id !== handleId
+            ),
+          }
+        : room
+    ),
+  }));
+};
   const addHinge = (roomId) => {
     setSurvey((prev) => ({
       ...prev,
@@ -939,7 +1022,67 @@ export default function MobileWindowDoorSurveyApp() {
 
                 <HingesSection room={activeRoom} addHinge={addHinge} updateHinge={updateHinge} removeHinge={removeHinge} />
 
-                <QtyGrid title="Handles" items={handleItems} values={activeRoom.handles} onChange={(item, v) => updateRoomQty(activeRoom.id, "handles", item, v)} />
+                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+  <div className="mb-3 flex items-center justify-between gap-3">
+    <h4 className="text-base font-black uppercase tracking-wide text-slate-700">Handles</h4>
+
+    <button
+      onClick={() => addHandle(activeRoom.id)}
+      className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white no-print"
+    >
+      <Plus className="mr-1 inline h-4 w-4" />
+      Add Handle
+    </button>
+  </div>
+
+  {(Array.isArray(activeRoom.handles) ? activeRoom.handles : []).length === 0 && (
+    <p className="rounded-2xl bg-white p-4 text-sm font-bold text-slate-500">
+      No handles added yet.
+    </p>
+  )}
+
+  <div className="space-y-3">
+    {(Array.isArray(activeRoom.handles) ? activeRoom.handles : []).map((handle) => (
+      <div key={handle.id} className="rounded-2xl bg-white p-4 shadow-sm">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <SelectField
+            label="Handle Type"
+            value={handle.type}
+            onChange={(v) => updateHandle(activeRoom.id, handle.id, "type", v)}
+            options={handleTypeOptions}
+          />
+
+          {handle.type && (
+            <SelectField
+              label="Colour"
+              value={handle.colour}
+              onChange={(v) => updateHandle(activeRoom.id, handle.id, "colour", v)}
+              options={["", ...(handleColourOptions[handle.type] || [])]}
+            />
+          )}
+
+          {handle.colour && (
+            <Field
+              label="Quantity"
+              value={handle.quantity}
+              onChange={(v) => updateHandle(activeRoom.id, handle.id, "quantity", v)}
+              inputMode="numeric"
+              placeholder="Qty"
+            />
+          )}
+        </div>
+
+        <button
+          onClick={() => removeHandle(activeRoom.id, handle.id)}
+          className="mt-3 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-bold text-red-600 no-print"
+        >
+          <Trash2 className="mr-1 inline h-4 w-4" />
+          Remove Handle
+        </button>
+      </div>
+    ))}
+  </div>
+</div>
                 <QtyGrid title="Locks / Mechanisms" items={lockItems} values={activeRoom.locks} onChange={(item, v) => updateRoomQty(activeRoom.id, "locks", item, v)} />
                 <QtyGrid title="Other Components" items={otherItems} values={activeRoom.other} onChange={(item, v) => updateRoomQty(activeRoom.id, "other", item, v)} />
 
