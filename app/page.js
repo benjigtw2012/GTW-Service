@@ -632,12 +632,7 @@ const addHandle = (roomId) => {
             ...room,
             handles: [
               ...(Array.isArray(room.handles) ? room.handles : []),
-              {
-                id: makeId(),
-                type: "",
-                colour: "",
-                quantity: "",
-              },
+              { id: makeId(), type: "", colour: "", quantity: "" },
             ],
           }
         : room
@@ -681,78 +676,79 @@ const removeHandle = (roomId, handleId) => {
       room.id === roomId
         ? {
             ...room,
-            handles: (Array.isArray(room.handles) ? room.handles : []).filter(
-              (handle) => handle.id !== handleId
-            ),
+            handles: (Array.isArray(room.handles) ? room.handles : []).filter((handle) => handle.id !== handleId),
           }
         : room
     ),
   }));
 };
 
-  const addHinge = (roomId) => {
-    setSurvey((prev) => ({
-      ...prev,
-      rooms: prev.rooms.map((room) =>
-        room.id === roomId
-          ? {
-              ...room,
-              hinges: [...(Array.isArray(room.hinges) ? room.hinges : []), { id: makeId(), type: "", size: "", quantity: "" }],
-            }
-          : room
-      ),
-    }));
-  };
+const addHinge = (roomId) => {
+  setSurvey((prev) => ({
+    ...prev,
+    rooms: prev.rooms.map((room) =>
+      room.id === roomId
+        ? {
+            ...room,
+            hinges: [
+              ...(Array.isArray(room.hinges) ? room.hinges : []),
+              { id: makeId(), type: "", size: "", quantity: "" },
+            ],
+          }
+        : room
+    ),
+  }));
+};
 
-  const updateHinge = (roomId, hingeId, key, value) => {
-    setSurvey((prev) => ({
-      ...prev,
-      rooms: prev.rooms.map((room) =>
-        room.id === roomId
-          ? {
-              ...room,
-              hinges: (Array.isArray(room.hinges) ? room.hinges : []).map((hinge) => {
-                if (hinge.id !== hingeId) return hinge;
+const updateHinge = (roomId, hingeId, key, value) => {
+  setSurvey((prev) => ({
+    ...prev,
+    rooms: prev.rooms.map((room) =>
+      room.id === roomId
+        ? {
+            ...room,
+            hinges: (Array.isArray(room.hinges) ? room.hinges : []).map((hinge) => {
+              if (hinge.id !== hingeId) return hinge;
 
-                const updated = { ...hinge, [key]: value };
+              const updated = { ...hinge, [key]: value };
 
-                if (key === "type") {
-                  updated.size = "";
-                  updated.quantity = "";
-                }
+              if (key === "type") {
+                updated.size = "";
+                updated.quantity = "";
+              }
 
-                if (key === "size") {
-                  updated.quantity = "";
-                }
+              if (key === "size") {
+                updated.quantity = "";
+              }
 
-                return updated;
-              }),
-            }
-          : room
-      ),
-    }));
-  };
+              return updated;
+            }),
+          }
+        : room
+    ),
+  }));
+};
 
-  const removeHinge = (roomId, hingeId) => {
-    setSurvey((prev) => ({
-      ...prev,
-      rooms: prev.rooms.map((room) =>
-        room.id === roomId
-          ? {
-              ...room,
-              hinges: (Array.isArray(room.hinges) ? room.hinges : []).filter((hinge) => hinge.id !== hingeId),
-            }
-          : room
-      ),
-    }));
-  };
+const removeHinge = (roomId, hingeId) => {
+  setSurvey((prev) => ({
+    ...prev,
+    rooms: prev.rooms.map((room) =>
+      room.id === roomId
+        ? {
+            ...room,
+            hinges: (Array.isArray(room.hinges) ? room.hinges : []).filter((hinge) => hinge.id !== hingeId),
+          }
+        : room
+    ),
+  }));
+};
 
-  const updateRoomNotes = (id, value) => {
-    setSurvey((prev) => ({
-      ...prev,
-      rooms: prev.rooms.map((r) => (r.id === id ? { ...r, notes: value } : r)),
-    }));
-  };
+const updateRoomNotes = (id, value) => {
+  setSurvey((prev) => ({
+    ...prev,
+    rooms: prev.rooms.map((r) => (r.id === id ? { ...r, notes: value } : r)),
+  }));
+};
 
   const addPhotos = async (event) => {
     const files = Array.from(event.target.files || []);
