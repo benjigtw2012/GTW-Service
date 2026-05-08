@@ -1,7 +1,5 @@
 "use client";
 
-"use client";
-
 import React, { useMemo, useRef, useState } from "react";
 import {
   Plus,
@@ -22,44 +20,15 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-const Card = ({ children, className = "" }) => (
-  <div className={`rounded-3xl border border-slate-200 bg-white ${className}`}>{children}</div>
-);
+const STORAGE_KEY = "gtw-window-door-survey-v4";
 
-const CardContent = ({ children, className = "" }) => <div className={className}>{children}</div>;
+const hingeTypeOptions = ["", "Top Hung", "Side Hung", "Egress"];
 
-const Button = ({ children, className = "", onClick, variant, asChild, ...props }) => {
-  const base =
-    variant === "outline"
-      ? "border border-slate-300 bg-white text-slate-900 px-4 py-2"
-      : "bg-slate-900 text-white px-4 py-2";
-
-  if (asChild && React.isValidElement(children)) {
-    return React.cloneElement(children, {
-      className: `${base} ${className} inline-flex items-center justify-center`,
-      ...props,
-    });
-  }
-
-  return (
-    <button onClick={onClick} className={`${base} ${className} inline-flex items-center justify-center`} {...props}>
-      {children}
-    </button>
-  );
+const hingeSizeOptions = {
+  "Top Hung": ["8 inch", "10 inch", "12 inch", "16 inch", "20 inch", "24 inch"],
+  "Side Hung": ["10 inch", "12 inch", "16 inch"],
+  Egress: ["12 inch", "16 inch"],
 };
-
-const STORAGE_KEY = "gtw-window-door-survey-v3";
-
-const hingeItems = [
-  "Top Hung 8\"",
-  "Top Hung 10\"",
-  "Top Hung 12\"",
-  "Top Hung 16\"",
-  "Side Hung 12\"",
-  "Side Hung 16\"",
-  "12\" Egress",
-  "16\" Egress",
-];
 
 const handleItems = [
   "White Espag Handle",
@@ -107,6 +76,10 @@ function todayUk() {
   return new Date().toLocaleDateString("en-GB");
 }
 
+function makeId() {
+  return crypto.randomUUID?.() || String(Date.now() + Math.random());
+}
+
 function mmNumber(value) {
   const match = String(value || "").match(/[0-9.]+/);
   return match ? Number(match[0]) : 0;
@@ -115,10 +88,6 @@ function mmNumber(value) {
 function calculateOverallThickness(outerPane, spacerSize, innerPane) {
   const total = mmNumber(outerPane) + mmNumber(spacerSize) + mmNumber(innerPane);
   return total ? `${total}mm` : "";
-}
-
-function makeId() {
-  return crypto.randomUUID?.() || String(Date.now() + Math.random());
 }
 
 function emptyGlassRow() {
@@ -142,10 +111,11 @@ function emptyGlassRow() {
 
 function emptyRoom() {
   const qtyMap = (items) => Object.fromEntries(items.map((item) => [item, ""]));
+
   return {
     id: makeId(),
     name: "",
-    hinges: qtyMap(hingeItems),
+    hinges: [],
     handles: qtyMap(handleItems),
     locks: qtyMap(lockItems),
     other: qtyMap(otherItems),
@@ -163,6 +133,32 @@ function getInitialSurvey() {
     office: { quoteRef: "", totalJobTime: "" },
     photos: [],
   };
+}
+
+const Card = ({ children, className = "" }) => (
+  <div className={`rounded-3xl border border-slate-200 bg-white ${className}`}>{children}</div>
+);
+
+const CardContent = ({ children, className = "" }) => <div className={className}>{children}</div>;
+
+function Button({ children, className = "", onClick, variant, asChild, ...props }) {
+  const base =
+    variant === "outline"
+      ? "border border-slate-300 bg-white text-slate-900 px-4 py-2"
+      : "bg-slate-900 text-white px-4 py-2";
+
+  if (asChild && React.isValidElement(children)) {
+    return React.cloneElement(children, {
+      className: `${base} ${className} inline-flex items-center justify-center`,
+      ...props,
+    });
+  }
+
+  return (
+    <button onClick={onClick} className={`${base} ${className} inline-flex items-center justify-center`} {...props}>
+      {children}
+    </button>
+  );
 }
 
 function Field({ label, value, onChange, placeholder = "", inputMode = "text" }) {
@@ -191,7 +187,7 @@ function SelectField({ label, value, onChange, options }) {
       >
         {options.map((option) => (
           <option key={option} value={option}>
-            {option}
+            {option || "Select"}
           </option>
         ))}
       </select>
@@ -224,6 +220,7 @@ function SketchPad({ value, onChange, title = "Sketch Pad" }) {
     const touch = event.touches?.[0];
     const clientX = touch ? touch.clientX : event.clientX;
     const clientY = touch ? touch.clientY : event.clientY;
+
     return {
       x: ((clientX - rect.left) / rect.width) * canvas.width,
       y: ((clientY - rect.top) / rect.height) * canvas.height,
@@ -233,6 +230,7 @@ function SketchPad({ value, onChange, title = "Sketch Pad" }) {
   const loadExisting = () => {
     const canvas = canvasRef.current;
     if (!canvas || !value) return;
+
     const ctx = canvas.getContext("2d");
     const img = new Image();
     img.onload = () => ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
@@ -250,6 +248,7 @@ function SketchPad({ value, onChange, title = "Sketch Pad" }) {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     const point = getCanvasPoint(event);
+
     isDrawingRef.current = true;
     ctx.lineWidth = 3;
     ctx.lineCap = "round";
@@ -261,9 +260,11 @@ function SketchPad({ value, onChange, title = "Sketch Pad" }) {
   const draw = (event) => {
     if (!isDrawingRef.current) return;
     event.preventDefault();
+
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     const point = getCanvasPoint(event);
+
     ctx.lineTo(point.x, point.y);
     ctx.stroke();
   };
@@ -277,6 +278,7 @@ function SketchPad({ value, onChange, title = "Sketch Pad" }) {
   const clearSketch = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     onChange("");
@@ -293,6 +295,7 @@ function SketchPad({ value, onChange, title = "Sketch Pad" }) {
           Clear
         </button>
       </div>
+
       <canvas
         ref={(node) => {
           canvasRef.current = node;
@@ -309,6 +312,7 @@ function SketchPad({ value, onChange, title = "Sketch Pad" }) {
         onTouchEnd={stopDrawing}
         className="h-72 w-full touch-none rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50"
       />
+
       {value && <p className="mt-2 text-xs font-bold text-green-700">Sketch saved.</p>}
     </div>
   );
@@ -318,13 +322,14 @@ function QtyGrid({ title, items, values, onChange }) {
   return (
     <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
       <h4 className="mb-3 text-base font-black uppercase tracking-wide text-slate-700">{title}</h4>
+
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {items.map((item) => (
           <label key={item} className="flex items-center justify-between gap-3 rounded-2xl bg-white p-4 shadow-sm">
             <span className="text-base font-bold text-slate-800">{item}</span>
             <input
               inputMode="numeric"
-              value={values[item] || ""}
+              value={values?.[item] || ""}
               onChange={(e) => onChange(item, e.target.value)}
               placeholder="Qty"
               className="h-14 w-24 rounded-2xl border border-slate-300 px-2 text-center text-lg font-bold outline-none focus:border-slate-900"
@@ -336,34 +341,108 @@ function QtyGrid({ title, items, values, onChange }) {
   );
 }
 
+function HingesSection({ room, addHinge, updateHinge, removeHinge }) {
+  const hinges = Array.isArray(room.hinges) ? room.hinges : [];
+
+  return (
+    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h4 className="text-base font-black uppercase tracking-wide text-slate-700">Hinges</h4>
+        <button onClick={() => addHinge(room.id)} className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white no-print">
+          <Plus className="mr-1 inline h-4 w-4" />
+          Add Hinge
+        </button>
+      </div>
+
+      {hinges.length === 0 && <p className="rounded-2xl bg-white p-4 text-sm font-bold text-slate-500">No hinges added yet.</p>}
+
+      <div className="space-y-3">
+        {hinges.map((hinge) => (
+          <div key={hinge.id} className="rounded-2xl bg-white p-4 shadow-sm">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <SelectField
+                label="Hinge Type"
+                value={hinge.type}
+                onChange={(v) => updateHinge(room.id, hinge.id, "type", v)}
+                options={hingeTypeOptions}
+              />
+
+              {hinge.type && (
+                <SelectField
+                  label="Hinge Size"
+                  value={hinge.size}
+                  onChange={(v) => updateHinge(room.id, hinge.id, "size", v)}
+                  options={["", ...(hingeSizeOptions[hinge.type] || [])]}
+                />
+              )}
+
+              {hinge.size && (
+                <Field
+                  label="Quantity"
+                  value={hinge.quantity}
+                  onChange={(v) => updateHinge(room.id, hinge.id, "quantity", v)}
+                  inputMode="numeric"
+                  placeholder="Qty"
+                />
+              )}
+            </div>
+
+            <button
+              onClick={() => removeHinge(room.id, hinge.id)}
+              className="mt-3 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-bold text-red-600 no-print"
+            >
+              <Trash2 className="mr-1 inline h-4 w-4" />
+              Remove Hinge
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function downloadTextFile(filename, content, type = "application/json") {
   const blob = new Blob([content], { type });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
+
   a.href = url;
   a.download = filename;
+
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
+
   URL.revokeObjectURL(url);
 }
 
 function getHardwareLines(room) {
   const lines = [];
+
+  if (Array.isArray(room.hinges)) {
+    const hinges = room.hinges.filter((h) => h.type && h.size && Number(h.quantity) > 0);
+    if (hinges.length) {
+      lines.push(`Hinges: ${hinges.map((h) => `${h.type} ${h.size} x ${h.quantity}`).join(", ")}`);
+    }
+  }
+
   const addGroup = (name, group) => {
     const entries = Object.entries(group || {}).filter(([, qty]) => qty && Number(qty) !== 0);
     if (entries.length) lines.push(`${name}: ${entries.map(([item, qty]) => `${item} x ${qty}`).join(", ")}`);
   };
-  addGroup("Hinges", room.hinges);
+
   addGroup("Handles", room.handles);
   addGroup("Locks", room.locks);
   addGroup("Other", room.other);
+
   if (room.notes) lines.push(`Notes: ${room.notes}`);
+
   return lines;
 }
 
 function buildOfficeEmail(survey, summary) {
   const { job, glassRows, rooms, engineerNotes, sketchNotes, office } = survey;
+
   const glass = glassRows
     .filter((g) => [g.location, g.width, g.height, g.notes].some(Boolean))
     .map(
@@ -377,7 +456,9 @@ function buildOfficeEmail(survey, summary) {
     .join("%0D%0A%0D%0A");
 
   const subject = encodeURIComponent(`Survey - ${job.customer || "Customer"} - ${job.jobRef || "No Ref"}`);
+
   const body = `Customer: ${job.customer}%0D%0AJob Ref: ${job.jobRef}%0D%0AQuote No: ${job.quoteNo}%0D%0AOrder No: ${job.orderNo}%0D%0ADate: ${job.date}%0D%0A%0D%0ASUMMARY:%0D%0AGlass Units: ${summary.glassCount}%0D%0AHardware Items: ${summary.totalHardwareQty}%0D%0APhotos: ${summary.photoCount}%0D%0A%0D%0AGLASS:%0D%0A${glass || "None entered"}%0D%0A%0D%0AHARDWARE:%0D%0A${hardware || "None entered"}%0D%0A%0D%0AENGINEER NOTES:%0D%0A${encodeURIComponent(engineerNotes)}%0D%0A%0D%0ASKETCH / GENERAL NOTES:%0D%0A${encodeURIComponent(sketchNotes)}%0D%0A%0D%0AOFFICE:%0D%0AQuote Ref: ${office.quoteRef}%0D%0ATotal Job Time: ${office.totalJobTime}`;
+
   return `mailto:office@guernseytradewindows.net?subject=${subject}&body=${body}`;
 }
 
@@ -395,18 +476,35 @@ export default function MobileWindowDoorSurveyApp() {
   const [activeRoomIndex, setActiveRoomIndex] = useState(0);
 
   const { job, glassRows, rooms, engineerNotes, sketchNotes, office, photos } = survey;
+
   const activeGlass = glassRows[Math.min(activeGlassIndex, glassRows.length - 1)] || glassRows[0];
   const activeRoom = rooms[Math.min(activeRoomIndex, rooms.length - 1)] || rooms[0];
 
   const summary = useMemo(() => {
     const totalHardwareQty = rooms.reduce((sum, room) => {
-      const groups = [room.hinges, room.handles, room.locks, room.other];
-      return sum + groups.reduce((s, group) => s + Object.values(group || {}).reduce((a, q) => a + (Number(q) || 0), 0), 0);
+      const hingeTotal = Array.isArray(room.hinges)
+        ? room.hinges.reduce((s, h) => s + (Number(h.quantity) || 0), 0)
+        : 0;
+
+      const groups = [room.handles, room.locks, room.other];
+
+      return sum + hingeTotal + groups.reduce((s, group) => s + Object.values(group || {}).reduce((a, q) => a + (Number(q) || 0), 0), 0);
     }, 0);
 
     const parts = {};
+
     rooms.forEach((room) => {
-      [room.hinges, room.handles, room.locks, room.other].forEach((group) => {
+      if (Array.isArray(room.hinges)) {
+        room.hinges.forEach((hinge) => {
+          const n = Number(hinge.quantity) || 0;
+          if (hinge.type && hinge.size && n > 0) {
+            const item = `${hinge.type} ${hinge.size}`;
+            parts[item] = (parts[item] || 0) + n;
+          }
+        });
+      }
+
+      [room.handles, room.locks, room.other].forEach((group) => {
         Object.entries(group || {}).forEach(([item, qty]) => {
           const n = Number(qty) || 0;
           if (n > 0) parts[item] = (parts[item] || 0) + n;
@@ -415,6 +513,7 @@ export default function MobileWindowDoorSurveyApp() {
     });
 
     const glassCount = glassRows.filter((g) => [g.location, g.width, g.height, g.notes].some(Boolean)).length;
+
     return { totalHardwareQty, parts, glassCount, photoCount: photos.length };
   }, [rooms, glassRows, photos]);
 
@@ -444,10 +543,13 @@ export default function MobileWindowDoorSurveyApp() {
       ...prev,
       glassRows: prev.glassRows.map((row) => {
         if (row.id !== id) return row;
+
         const updated = { ...row, [key]: value };
+
         if (["outerPane", "spacerSize", "innerPane"].includes(key)) {
           updated.overallThickness = calculateOverallThickness(updated.outerPane, updated.spacerSize, updated.innerPane);
         }
+
         return updated;
       }),
     }));
@@ -475,6 +577,11 @@ export default function MobileWindowDoorSurveyApp() {
     const copy = JSON.parse(JSON.stringify(room));
     copy.id = makeId();
     copy.name = `${room.name || "Room"} copy`;
+
+    if (Array.isArray(copy.hinges)) {
+      copy.hinges = copy.hinges.map((hinge) => ({ ...hinge, id: makeId() }));
+    }
+
     setSurvey((prev) => ({ ...prev, rooms: [...prev.rooms, copy] }));
     setActiveRoomIndex(rooms.length);
   };
@@ -485,32 +592,101 @@ export default function MobileWindowDoorSurveyApp() {
     setActiveRoomIndex((i) => Math.max(0, i - 1));
   };
 
-  const updateRoomName = (id, value) => setSurvey((prev) => ({ ...prev, rooms: prev.rooms.map((r) => (r.id === id ? { ...r, name: value } : r)) }));
+  const updateRoomName = (id, value) => {
+    setSurvey((prev) => ({
+      ...prev,
+      rooms: prev.rooms.map((r) => (r.id === id ? { ...r, name: value } : r)),
+    }));
+  };
 
   const updateRoomQty = (id, group, item, value) => {
     setSurvey((prev) => ({
       ...prev,
+      rooms: prev.rooms.map((room) => (room.id === id ? { ...room, [group]: { ...room[group], [item]: value } } : room)),
+    }));
+  };
+
+  const addHinge = (roomId) => {
+    setSurvey((prev) => ({
+      ...prev,
       rooms: prev.rooms.map((room) =>
-        room.id === id ? { ...room, [group]: { ...room[group], [item]: value } } : room
+        room.id === roomId
+          ? {
+              ...room,
+              hinges: [...(Array.isArray(room.hinges) ? room.hinges : []), { id: makeId(), type: "", size: "", quantity: "" }],
+            }
+          : room
       ),
     }));
   };
 
-  const updateRoomNotes = (id, value) => setSurvey((prev) => ({ ...prev, rooms: prev.rooms.map((r) => (r.id === id ? { ...r, notes: value } : r)) }));
+  const updateHinge = (roomId, hingeId, key, value) => {
+    setSurvey((prev) => ({
+      ...prev,
+      rooms: prev.rooms.map((room) =>
+        room.id === roomId
+          ? {
+              ...room,
+              hinges: (Array.isArray(room.hinges) ? room.hinges : []).map((hinge) => {
+                if (hinge.id !== hingeId) return hinge;
+
+                const updated = { ...hinge, [key]: value };
+
+                if (key === "type") {
+                  updated.size = "";
+                  updated.quantity = "";
+                }
+
+                if (key === "size") {
+                  updated.quantity = "";
+                }
+
+                return updated;
+              }),
+            }
+          : room
+      ),
+    }));
+  };
+
+  const removeHinge = (roomId, hingeId) => {
+    setSurvey((prev) => ({
+      ...prev,
+      rooms: prev.rooms.map((room) =>
+        room.id === roomId
+          ? {
+              ...room,
+              hinges: (Array.isArray(room.hinges) ? room.hinges : []).filter((hinge) => hinge.id !== hingeId),
+            }
+          : room
+      ),
+    }));
+  };
+
+  const updateRoomNotes = (id, value) => {
+    setSurvey((prev) => ({
+      ...prev,
+      rooms: prev.rooms.map((r) => (r.id === id ? { ...r, notes: value } : r)),
+    }));
+  };
 
   const addPhotos = async (event) => {
     const files = Array.from(event.target.files || []);
+
     const readFile = (file) =>
       new Promise((resolve) => {
         const reader = new FileReader();
         reader.onload = () => resolve({ id: makeId(), name: file.name, dataUrl: reader.result });
         reader.readAsDataURL(file);
       });
+
     const uploaded = await Promise.all(files.map(readFile));
     setSurvey((prev) => ({ ...prev, photos: [...prev.photos, ...uploaded] }));
   };
 
-  const removePhoto = (id) => setSurvey((prev) => ({ ...prev, photos: prev.photos.filter((p) => p.id !== id) }));
+  const removePhoto = (id) => {
+    setSurvey((prev) => ({ ...prev, photos: prev.photos.filter((p) => p.id !== id) }));
+  };
 
   const glassLabel = activeGlass?.location ? activeGlass.location : `Glass Unit ${activeGlassIndex + 1}`;
   const roomLabel = activeRoom?.name ? activeRoom.name : `Room / Area ${activeRoomIndex + 1}`;
@@ -534,6 +710,7 @@ export default function MobileWindowDoorSurveyApp() {
               <p className="text-base font-bold text-slate-700">Window & Door Service Survey</p>
               <p className="text-xs text-slate-500 no-print">One active glass unit and one room at a time to reduce scrolling.</p>
             </div>
+
             <div className="rounded-2xl bg-slate-900 px-4 py-3 text-right text-white print:bg-white print:text-black print:ring-1 print:ring-black">
               <div className="text-xs opacity-80">Items</div>
               <div className="text-2xl font-black">{summary.totalHardwareQty}</div>
@@ -541,11 +718,27 @@ export default function MobileWindowDoorSurveyApp() {
           </div>
 
           <div className="mt-4 grid grid-cols-2 gap-3 no-print sm:grid-cols-5">
-            <Button onClick={saveSurvey} className="h-14 rounded-2xl text-base font-bold"><Save className="mr-1 h-5 w-5" /> Save</Button>
-            <Button onClick={() => window.print()} variant="outline" className="h-14 rounded-2xl text-base font-bold"><Printer className="mr-1 h-5 w-5" /> PDF</Button>
-            <Button onClick={exportJson} variant="outline" className="h-14 rounded-2xl text-base font-bold"><Download className="mr-1 h-5 w-5" /> Export</Button>
-            <Button asChild variant="outline" className="h-14 rounded-2xl text-base font-bold"><a href={buildOfficeEmail(survey, summary)}><Send className="mr-1 h-5 w-5" /> Email</a></Button>
-            <Button onClick={resetSurvey} variant="outline" className="h-14 rounded-2xl text-base font-bold"><RotateCcw className="mr-1 h-5 w-5" /> New</Button>
+            <Button onClick={saveSurvey} className="h-14 rounded-2xl text-base font-bold">
+              <Save className="mr-1 h-5 w-5" /> Save
+            </Button>
+
+            <Button onClick={() => window.print()} variant="outline" className="h-14 rounded-2xl text-base font-bold">
+              <Printer className="mr-1 h-5 w-5" /> PDF
+            </Button>
+
+            <Button onClick={exportJson} variant="outline" className="h-14 rounded-2xl text-base font-bold">
+              <Download className="mr-1 h-5 w-5" /> Export
+            </Button>
+
+            <Button asChild variant="outline" className="h-14 rounded-2xl text-base font-bold">
+              <a href={buildOfficeEmail(survey, summary)}>
+                <Send className="mr-1 h-5 w-5" /> Email
+              </a>
+            </Button>
+
+            <Button onClick={resetSurvey} variant="outline" className="h-14 rounded-2xl text-base font-bold">
+              <RotateCcw className="mr-1 h-5 w-5" /> New
+            </Button>
           </div>
         </div>
 
@@ -555,6 +748,7 @@ export default function MobileWindowDoorSurveyApp() {
               <ClipboardList className="h-6 w-6" />
               <h2 className="text-xl font-black">Job Details</h2>
             </div>
+
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field label="Customer Name" value={job.customer} onChange={(v) => updateJob("customer", v)} />
               <Field label="Job Reference" value={job.jobRef} onChange={(v) => updateJob("jobRef", v)} />
@@ -572,18 +766,33 @@ export default function MobileWindowDoorSurveyApp() {
               <FileText className="h-6 w-6" />
               <h2 className="text-xl font-black">Auto Summary</h2>
             </div>
+
             <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="rounded-2xl bg-white p-4 shadow-sm"><div className="text-2xl font-black">{summary.glassCount}</div><div className="text-xs font-bold text-slate-500">Glass Units</div></div>
-              <div className="rounded-2xl bg-white p-4 shadow-sm"><div className="text-2xl font-black">{summary.totalHardwareQty}</div><div className="text-xs font-bold text-slate-500">Hardware Qty</div></div>
-              <div className="rounded-2xl bg-white p-4 shadow-sm"><div className="text-2xl font-black">{summary.photoCount}</div><div className="text-xs font-bold text-slate-500">Photos</div></div>
+              <div className="rounded-2xl bg-white p-4 shadow-sm">
+                <div className="text-2xl font-black">{summary.glassCount}</div>
+                <div className="text-xs font-bold text-slate-500">Glass Units</div>
+              </div>
+
+              <div className="rounded-2xl bg-white p-4 shadow-sm">
+                <div className="text-2xl font-black">{summary.totalHardwareQty}</div>
+                <div className="text-xs font-bold text-slate-500">Hardware Qty</div>
+              </div>
+
+              <div className="rounded-2xl bg-white p-4 shadow-sm">
+                <div className="text-2xl font-black">{summary.photoCount}</div>
+                <div className="text-xs font-bold text-slate-500">Photos</div>
+              </div>
             </div>
+
             {Object.keys(summary.parts).length > 0 && (
               <div className="rounded-2xl bg-slate-50 p-4">
                 <h3 className="mb-2 font-black">Parts Summary</h3>
+
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {Object.entries(summary.parts).map(([item, qty]) => (
                     <div key={item} className="flex justify-between rounded-xl bg-white px-3 py-2 text-sm font-bold">
-                      <span>{item}</span><span>x {qty}</span>
+                      <span>{item}</span>
+                      <span>x {qty}</span>
                     </div>
                   ))}
                 </div>
@@ -599,20 +808,33 @@ export default function MobileWindowDoorSurveyApp() {
                 <GlassWater className="h-6 w-6" />
                 <h2 className="text-xl font-black">Glass</h2>
               </div>
+
               <Button onClick={addGlassRow} className="h-14 rounded-2xl px-5 text-base font-bold no-print">
                 <Plus className="mr-1 h-5 w-5" /> Add Glass
               </Button>
             </div>
 
             <div className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 p-3 no-print">
-              <button disabled={activeGlassIndex === 0} onClick={() => setActiveGlassIndex((i) => Math.max(0, i - 1))} className="rounded-xl border border-slate-300 bg-white p-3 disabled:opacity-30">
+              <button
+                disabled={activeGlassIndex === 0}
+                onClick={() => setActiveGlassIndex((i) => Math.max(0, i - 1))}
+                className="rounded-xl border border-slate-300 bg-white p-3 disabled:opacity-30"
+              >
                 <ChevronLeft className="h-5 w-5" />
               </button>
+
               <div className="text-center">
-                <div className="text-sm font-bold text-slate-500">{activeGlassIndex + 1} of {glassRows.length}</div>
+                <div className="text-sm font-bold text-slate-500">
+                  {activeGlassIndex + 1} of {glassRows.length}
+                </div>
                 <div className="text-lg font-black">{glassLabel}</div>
               </div>
-              <button disabled={activeGlassIndex >= glassRows.length - 1} onClick={() => setActiveGlassIndex((i) => Math.min(glassRows.length - 1, i + 1))} className="rounded-xl border border-slate-300 bg-white p-3 disabled:opacity-30">
+
+              <button
+                disabled={activeGlassIndex >= glassRows.length - 1}
+                onClick={() => setActiveGlassIndex((i) => Math.min(glassRows.length - 1, i + 1))}
+                className="rounded-xl border border-slate-300 bg-white p-3 disabled:opacity-30"
+              >
                 <ChevronRight className="h-5 w-5" />
               </button>
             </div>
@@ -621,18 +843,22 @@ export default function MobileWindowDoorSurveyApp() {
               <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 print-break print:bg-white">
                 <div className="mb-4 flex items-center justify-between">
                   <h3 className="text-lg font-black">{glassLabel}</h3>
+
                   {glassRows.length > 1 && (
                     <button onClick={() => removeGlassRow(activeGlass.id)} className="rounded-2xl p-3 text-slate-500 hover:bg-white hover:text-red-600 no-print">
                       <Trash2 className="h-5 w-5" />
                     </button>
                   )}
                 </div>
+
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <Field label="Location" value={activeGlass.location} onChange={(v) => updateGlass(activeGlass.id, "location", v)} placeholder="Kitchen window" />
+
                   <div className="grid grid-cols-2 gap-3">
                     <Field label="Width mm" value={activeGlass.width} onChange={(v) => updateGlass(activeGlass.id, "width", v)} inputMode="numeric" />
                     <Field label="Height mm" value={activeGlass.height} onChange={(v) => updateGlass(activeGlass.id, "height", v)} inputMode="numeric" />
                   </div>
+
                   <SelectField label="Outer Pane" value={activeGlass.outerPane} onChange={(v) => updateGlass(activeGlass.id, "outerPane", v)} options={paneThicknessOptions} />
                   <SelectField label="Spacer Size" value={activeGlass.spacerSize} onChange={(v) => updateGlass(activeGlass.id, "spacerSize", v)} options={spacerSizeOptions} />
                   <SelectField label="Inner Pane" value={activeGlass.innerPane} onChange={(v) => updateGlass(activeGlass.id, "innerPane", v)} options={paneThicknessOptions} />
@@ -641,9 +867,11 @@ export default function MobileWindowDoorSurveyApp() {
                   <SelectField label="Spacer Bar Type" value={activeGlass.spacerBar} onChange={(v) => updateGlass(activeGlass.id, "spacerBar", v)} options={spacerBarOptions} />
                   <SelectField label="Bars / Lead" value={activeGlass.decorativeBar} onChange={(v) => updateGlass(activeGlass.id, "decorativeBar", v)} options={decorativeBarOptions} />
                   <Field label="Pattern / Design" value={activeGlass.pattern} onChange={(v) => updateGlass(activeGlass.id, "pattern", v)} />
+
                   <div className="sm:col-span-2">
                     <Field label="Notes" value={activeGlass.notes} onChange={(v) => updateGlass(activeGlass.id, "notes", v)} />
                   </div>
+
                   <div className="sm:col-span-2">
                     <SketchPad title="Glass Sketch" value={activeGlass.sketchImage} onChange={(v) => updateGlass(activeGlass.id, "sketchImage", v)} />
                   </div>
@@ -660,20 +888,33 @@ export default function MobileWindowDoorSurveyApp() {
                 <Home className="h-6 w-6" />
                 <h2 className="text-xl font-black">Parts / Room</h2>
               </div>
+
               <Button onClick={addRoom} className="h-14 rounded-2xl px-5 text-base font-bold no-print">
                 <Plus className="mr-1 h-5 w-5" /> Add Area
               </Button>
             </div>
 
             <div className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 p-3 no-print">
-              <button disabled={activeRoomIndex === 0} onClick={() => setActiveRoomIndex((i) => Math.max(0, i - 1))} className="rounded-xl border border-slate-300 bg-white p-3 disabled:opacity-30">
+              <button
+                disabled={activeRoomIndex === 0}
+                onClick={() => setActiveRoomIndex((i) => Math.max(0, i - 1))}
+                className="rounded-xl border border-slate-300 bg-white p-3 disabled:opacity-30"
+              >
                 <ChevronLeft className="h-5 w-5" />
               </button>
+
               <div className="text-center">
-                <div className="text-sm font-bold text-slate-500">{activeRoomIndex + 1} of {rooms.length}</div>
+                <div className="text-sm font-bold text-slate-500">
+                  {activeRoomIndex + 1} of {rooms.length}
+                </div>
                 <div className="text-lg font-black">{roomLabel}</div>
               </div>
-              <button disabled={activeRoomIndex >= rooms.length - 1} onClick={() => setActiveRoomIndex((i) => Math.min(rooms.length - 1, i + 1))} className="rounded-xl border border-slate-300 bg-white p-3 disabled:opacity-30">
+
+              <button
+                disabled={activeRoomIndex >= rooms.length - 1}
+                onClick={() => setActiveRoomIndex((i) => Math.min(rooms.length - 1, i + 1))}
+                className="rounded-xl border border-slate-300 bg-white p-3 disabled:opacity-30"
+              >
                 <ChevronRight className="h-5 w-5" />
               </button>
             </div>
@@ -684,9 +925,11 @@ export default function MobileWindowDoorSurveyApp() {
                   <div className="flex-1">
                     <Field label="Room / Area" value={activeRoom.name} onChange={(v) => updateRoomName(activeRoom.id, v)} placeholder="Kitchen / Lounge / Bedroom" />
                   </div>
+
                   <button onClick={() => duplicateRoom(activeRoom)} className="mb-1 rounded-2xl border border-slate-200 p-4 text-slate-600 hover:bg-slate-50 no-print" title="Duplicate area">
                     <Copy className="h-6 w-6" />
                   </button>
+
                   {rooms.length > 1 && (
                     <button onClick={() => removeRoom(activeRoom.id)} className="mb-1 rounded-2xl border border-slate-200 p-4 text-slate-500 hover:text-red-600 no-print">
                       <Trash2 className="h-6 w-6" />
@@ -694,10 +937,12 @@ export default function MobileWindowDoorSurveyApp() {
                   )}
                 </div>
 
-                <QtyGrid title="Hinges" items={hingeItems} values={activeRoom.hinges} onChange={(item, v) => updateRoomQty(activeRoom.id, "hinges", item, v)} />
+                <HingesSection room={activeRoom} addHinge={addHinge} updateHinge={updateHinge} removeHinge={removeHinge} />
+
                 <QtyGrid title="Handles" items={handleItems} values={activeRoom.handles} onChange={(item, v) => updateRoomQty(activeRoom.id, "handles", item, v)} />
                 <QtyGrid title="Locks / Mechanisms" items={lockItems} values={activeRoom.locks} onChange={(item, v) => updateRoomQty(activeRoom.id, "locks", item, v)} />
                 <QtyGrid title="Other Components" items={otherItems} values={activeRoom.other} onChange={(item, v) => updateRoomQty(activeRoom.id, "other", item, v)} />
+
                 <TextArea label="Room Notes" value={activeRoom.notes} onChange={(v) => updateRoomNotes(activeRoom.id, v)} placeholder="Anything unusual for this room/area" />
               </div>
             )}
@@ -710,7 +955,13 @@ export default function MobileWindowDoorSurveyApp() {
               <Wrench className="h-6 w-6" />
               <h2 className="text-xl font-black">Engineer Notes</h2>
             </div>
-            <TextArea label="Maintenance / Repair Requirements" value={engineerNotes} onChange={(v) => setSurvey((p) => ({ ...p, engineerNotes: v }))} placeholder="Urgent repairs, general maintenance, parts required..." />
+
+            <TextArea
+              label="Maintenance / Repair Requirements"
+              value={engineerNotes}
+              onChange={(v) => setSurvey((p) => ({ ...p, engineerNotes: v }))}
+              placeholder="Urgent repairs, general maintenance, parts required..."
+            />
           </CardContent>
         </Card>
 
@@ -720,20 +971,30 @@ export default function MobileWindowDoorSurveyApp() {
               <Camera className="h-6 w-6" />
               <h2 className="text-xl font-black">Photos / General Sketch Notes</h2>
             </div>
-            <TextArea label="General Sketch / Lead Notes" value={sketchNotes} onChange={(v) => setSurvey((p) => ({ ...p, sketchNotes: v }))} placeholder="General job notes if not linked to one glass unit." />
+
+            <TextArea
+              label="General Sketch / Lead Notes"
+              value={sketchNotes}
+              onChange={(v) => setSurvey((p) => ({ ...p, sketchNotes: v }))}
+              placeholder="General job notes if not linked to one glass unit."
+            />
+
             <label className="block rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50 p-8 text-center text-base font-bold text-slate-700 no-print">
               <Camera className="mx-auto mb-3 h-10 w-10" />
               Tap to take photos or upload from device
               <input type="file" accept="image/*" capture="environment" multiple onChange={addPhotos} className="hidden" />
             </label>
+
             {photos.length > 0 && (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {photos.map((photo) => (
                   <div key={photo.id} className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white">
                     <img src={photo.dataUrl} alt={photo.name} className="h-36 w-full object-cover" />
+
                     <button onClick={() => removePhoto(photo.id)} className="absolute right-2 top-2 rounded-full bg-white p-2 text-red-600 shadow no-print">
                       <Trash2 className="h-4 w-4" />
                     </button>
+
                     <p className="truncate px-2 py-1 text-xs text-slate-600">{photo.name}</p>
                   </div>
                 ))}
@@ -748,6 +1009,7 @@ export default function MobileWindowDoorSurveyApp() {
               <FileText className="h-6 w-6" />
               <h2 className="text-xl font-black">Office Use Only</h2>
             </div>
+
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field label="Quote Ref" value={office.quoteRef} onChange={(v) => updateOffice("quoteRef", v)} />
               <Field label="Total Job Time" value={office.totalJobTime} onChange={(v) => updateOffice("totalJobTime", v)} placeholder="e.g. 4 hours" />
