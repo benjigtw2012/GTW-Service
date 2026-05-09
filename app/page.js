@@ -47,22 +47,38 @@ const lockTypeOptions = [
   "Door Mech Special",
 ];
 
-const lockBacksetOptions = ["", "20mm", "22mm"];
+const espagBacksetOptions = [
+  "",
+  "20mm",
+  "22mm",
+];
 
-const doorRollerOptions = ["", "2", "4"];
+const espagLengthOptions = [
+  "",
+  "300mm",
+  "400mm",
+  "600mm",
+  "800mm",
+  "1000mm",
+  "1200mm",
+  "1300mm",
+  "1500mm",
+];
 
-const doorBacksetOptions = ["", "28mm", "30mm", "32mm", "35mm", "Other"];
+const rollerOptions = [
+  "",
+  "2",
+  "4",
+];
 
-const lockDetailOptions = {
-  "Multipoint Lock": ["GU", "Yale", "Mila", "Fullex", "Other"],
-  "Gearbox Only": ["35mm", "45mm", "55mm", "Other"],
-  "Window Lock": ["Inline", "Offset", "Cockspur", "Other"],
-  "Shootbolt Gearbox": ["Mila", "Saracen", "Other"],
-  "Espag Mechanism": ["200mm", "400mm", "600mm", "Other"],
-  "Door Cylinder": ["Euro", "Thumbturn", "Anti Snap", "Other"],
-  "Patio Door Lock": ["Hook", "Slider", "Other"],
-  "Other Lock / Mechanism": ["Other"],
-};
+const doorBacksetOptions = [
+  "",
+  "28mm",
+  "30mm",
+  "32mm",
+  "35mm",
+  "Other",
+];
 
 const roomItemTypeOptions = ["", "Window", "Door", "French Door", "Patio Door", "Composite Door", "Other"];
 
