@@ -571,12 +571,74 @@ function RoomItemsSection({ room, addRoomItem, updateRoomItem, removeRoomItem })
                 />
               </div>
             </div>
+                    
+              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+  <div className="mb-3 flex items-center justify-between gap-3">
+    <h6 className="font-black text-slate-700">Hinges for this Window / Door</h6>
+
+    <button
+      onClick={() => addItemHinge(room.id, item.id)}
+      className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white no-print"
+    >
+      <Plus className="mr-1 inline h-4 w-4" />
+      Add Hinge
+    </button>
+  </div>
+
+  {(Array.isArray(item.hinges) ? item.hinges : []).length === 0 && (
+    <p className="rounded-2xl bg-white p-3 text-sm font-bold text-slate-500">
+      No hinges added to this item yet.
+    </p>
+  )}
+
+  <div className="space-y-3">
+    {(Array.isArray(item.hinges) ? item.hinges : []).map((hinge) => (
+      <div key={hinge.id} className="rounded-2xl bg-white p-3 shadow-sm">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <SelectField
+            label="Hinge Type"
+            value={hinge.type}
+            onChange={(v) => updateItemHinge(room.id, item.id, hinge.id, "type", v)}
+            options={hingeTypeOptions}
+          />
+
+          {hinge.type && (
+            <SelectField
+              label="Hinge Size"
+              value={hinge.size}
+              onChange={(v) => updateItemHinge(room.id, item.id, hinge.id, "size", v)}
+              options={["", ...(hingeSizeOptions[hinge.type] || [])]}
+            />
+          )}
+
+          {hinge.size && (
+            <Field
+              label="Quantity"
+              value={hinge.quantity}
+              onChange={(v) => updateItemHinge(room.id, item.id, hinge.id, "quantity", v)}
+              inputMode="numeric"
+              placeholder="Qty"
+            />
+          )}
+        </div>
+
+        <button
+          onClick={() => removeItemHinge(room.id, item.id, hinge.id)}
+          className="mt-3 rounded-2xl border border-slate-200 px-3 py-2 text-sm font-bold text-red-600 no-print"
+        >
+          <Trash2 className="mr-1 inline h-4 w-4" />
+          Remove Hinge
+        </button>
+      </div>
+    ))}
+  </div>
+</div>
+            </div>      
           </div>
         ))}
       </div>
     </div>
-  );
-}
+
 
 function downloadTextFile(filename, content, type = "application/json") {
   const blob = new Blob([content], { type });
@@ -964,7 +1026,15 @@ const removeLock = (roomId, lockId) => {
             ...room,
             items: [
               ...(Array.isArray(room.items) ? room.items : []),
-              { id: makeId(), name: "", type: "", notes: "" },
+              {
+  id: makeId(),
+  name: "",
+  type: "",
+  notes: "",
+  hinges: [],
+  handles: [],
+  locks: [],
+},
             ],
           }
         : room
@@ -987,6 +1057,87 @@ const updateRoomItem = (roomId, itemId, key, value) => {
     ),
   }));
 };
+
+ const addItemHinge = (roomId, itemId) => {
+  setSurvey((prev) => ({
+    ...prev,
+    rooms: prev.rooms.map((room) =>
+      room.id === roomId
+        ? {
+            ...room,
+            items: (Array.isArray(room.items) ? room.items : []).map((item) =>
+              item.id === itemId
+                ? {
+                    ...item,
+                    hinges: [
+                      ...(Array.isArray(item.hinges) ? item.hinges : []),
+                      { id: makeId(), type: "", size: "", quantity: "" },
+                    ],
+                  }
+                : item
+            ),
+          }
+        : room
+    ),
+  }));
+};
+
+const updateItemHinge = (roomId, itemId, hingeId, key, value) => {
+  setSurvey((prev) => ({
+    ...prev,
+    rooms: prev.rooms.map((room) =>
+      room.id === roomId
+        ? {
+            ...room,
+            items: (Array.isArray(room.items) ? room.items : []).map((item) =>
+              item.id === itemId
+                ? {
+                    ...item,
+                    hinges: (Array.isArray(item.hinges) ? item.hinges : []).map((hinge) => {
+                      if (hinge.id !== hingeId) return hinge;
+
+                      const updated = { ...hinge, [key]: value };
+
+                      if (key === "type") {
+                        updated.size = "";
+                        updated.quantity = "";
+                      }
+
+                      if (key === "size") {
+                        updated.quantity = "";
+                      }
+
+                      return updated;
+                    }),
+                  }
+                : item
+            ),
+          }
+        : room
+    ),
+  }));
+};
+
+const removeItemHinge = (roomId, itemId, hingeId) => {
+  setSurvey((prev) => ({
+    ...prev,
+    rooms: prev.rooms.map((room) =>
+      room.id === roomId
+        ? {
+            ...room,
+            items: (Array.isArray(room.items) ? room.items : []).map((item) =>
+              item.id === itemId
+                ? {
+                    ...item,
+                    hinges: (Array.isArray(item.hinges) ? item.hinges : []).filter((hinge) => hinge.id !== hingeId),
+                  }
+                : item
+            ),
+          }
+        : room
+    ),
+  }));
+}; 
 
 const removeRoomItem = (roomId, itemId) => {
   setSurvey((prev) => ({
