@@ -679,11 +679,36 @@ function RoomItemsSection({
                     <SelectField label="Lock Type" value={lock.type} onChange={(v) => updateItemLock(room.id, item.id, lock.id, "type", v)} options={lockTypeOptions} />
 
                     {(lock.type === "Window Espag Inline" || lock.type === "Window Espag Offset") && (
-                      <>
-                        <SelectField label="Backset" value={lock.backset} onChange={(v) => updateItemLock(room.id, item.id, lock.id, "backset", v)} options={lockBacksetOptions} />
-                        <Field label="Quantity" value={lock.quantity} onChange={(v) => updateItemLock(room.id, item.id, lock.id, "quantity", v)} inputMode="numeric" placeholder="Qty" />
-                      </>
-                    )}
+  <>
+    <SelectField
+      label="Backset"
+      value={lock.backset}
+      onChange={(v) =>
+        updateItemLock(room.id, item.id, lock.id, "backset", v)
+      }
+      options={espagBacksetOptions}
+    />
+
+    <SelectField
+      label="Length"
+      value={lock.length}
+      onChange={(v) =>
+        updateItemLock(room.id, item.id, lock.id, "length", v)
+      }
+      options={espagLengthOptions}
+    />
+
+    <Field
+      label="Quantity"
+      value={lock.quantity}
+      onChange={(v) =>
+        updateItemLock(room.id, item.id, lock.id, "quantity", v)
+      }
+      inputMode="numeric"
+      placeholder="Qty"
+    />
+  </>
+)}
 
                     {lock.type === "Door Mech - Rollers" && (
                       <>
@@ -1410,6 +1435,7 @@ const removeItemHandle = (roomId, itemId, handleId) => {
                         id: makeId(),
                         type: "",
                         backset: "",
+                        length: "",
                         rollers: "",
                         doorBackset: "",
                         lockingPoints: "",
@@ -1445,6 +1471,7 @@ const updateItemLock = (roomId, itemId, lockId, key, value) => {
 
                       if (key === "type") {
                         updated.backset = "";
+                        updated.length = "";
                         updated.rollers = "";
                         updated.doorBackset = "";
                         updated.lockingPoints = "";
