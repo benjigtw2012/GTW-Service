@@ -1517,20 +1517,6 @@ const removeItemLock = (roomId, itemId, lockId) => {
     ),
   }));
 };
-
-const removeRoomItem = (roomId, itemId) => {
-  setSurvey((prev) => ({
-    ...prev,
-    rooms: prev.rooms.map((room) =>
-      room.id === roomId
-        ? {
-            ...room,
-            items: (Array.isArray(room.items) ? room.items : []).filter((item) => item.id !== itemId),
-          }
-        : room
-    ),
-  }));
-};
   
   const updateRoomNotes = (id, value) => {
     setSurvey((prev) => ({ ...prev, rooms: prev.rooms.map((r) => (r.id === id ? { ...r, notes: value } : r)) }));
