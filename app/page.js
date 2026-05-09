@@ -77,9 +77,36 @@ const otherItems = [
 
 const paneThicknessOptions = ["4mm", "6mm", "6.4mm Laminated", "8mm", "10mm", "Other"];
 const spacerSizeOptions = ["6mm", "8mm", "10mm", "12mm", "14mm", "16mm", "18mm", "20mm", "Other"];
-const spacerBarOptions = ["Black Spacer", "Silver Spacer", "Warm Edge Spacer", "Black Swiss Spacer", "Ali Spacer (Any Colour)", "Other"];
-const decorativeBarOptions = ["None", "Black Swiss Bars", "All Colour Ali Bars", "Georgian Bars", "Lead Work", "Other"];
-const glassTypeOptions = ["Clear", "Low-E", "Toughened", "Laminated", "Pattern", "Obscure", "Other"];
+const spacerBarOptions = ["Black Swiss", "Silver Ali", "Black Ali", "White Ali", "Other - check notes"];
+const decorativeBarOptions = ["None", "18mm G Bar", "25mm G Bar", "Lead"];
+const glassTypeOptions = ["Standard Toughened Low-E", "Acoustic", "Laminated", "Single Glaze"];
+
+const patternOptions = [
+  "",
+  "Satin",
+  "Stippolyte",
+  "Arctic",
+  "Autumn",
+  "Cassini",
+  "Chantilly",
+  "Charcoal Sticks",
+  "Contora",
+  "Cotswold",
+  "Digital",
+  "Everglade",
+  "Flemish",
+  "Florielle",
+  "Mayflower",
+  "Minster",
+  "Oak",
+  "Pelerine",
+  "Reeded",
+  "Sycamore",
+  "Taffeta",
+  "Tribal",
+  "Warwick",
+  "Other - check notes",
+];
 
 function todayUk() {
   return new Date().toLocaleDateString("en-GB");
@@ -109,10 +136,11 @@ function emptyGlassRow() {
     spacerSize: "16mm",
     innerPane: "4mm",
     overallThickness: "24mm",
-    type: "Clear",
+    type: "Standard Toughened Low-E",
     spacerBar: "Black Spacer",
     decorativeBar: "None",
-    pattern: "",
+   pattern: "",
+barColour: "",
     notes: "",
     sketchImage: "",
   };
@@ -617,9 +645,26 @@ export default function MobileWindowDoorSurveyApp() {
       glassRows: prev.glassRows.map((row) => {
         if (row.id !== id) return row;
         const updated = { ...row, [key]: value };
-        if (["outerPane", "spacerSize", "innerPane"].includes(key)) {
-          updated.overallThickness = calculateOverallThickness(updated.outerPane, updated.spacerSize, updated.innerPane);
-        }
+        if (key === "type" && value === "Single Glaze") {
+  updated.spacerSize = "";
+  updated.innerPane = "";
+  updated.spacerBar = "";
+  updated.overallThickness = updated.outerPane || "";
+}
+
+if (key === "type" && value !== "Single Glaze") {
+  updated.spacerSize = updated.spacerSize || "16mm";
+  updated.innerPane = updated.innerPane || "4mm";
+  updated.spacerBar = updated.spacerBar || "Black Swiss";
+  updated.overallThickness = calculateOverallThickness(updated.outerPane, updated.spacerSize, updated.innerPane);
+}
+
+if (["outerPane", "spacerSize", "innerPane"].includes(key)) {
+  updated.overallThickness =
+    updated.type === "Single Glaze"
+      ? updated.outerPane || ""
+      : calculateOverallThickness(updated.outerPane, updated.spacerSize, updated.innerPane);
+}
         return updated;
       }),
     }));
@@ -931,13 +976,25 @@ const removeLock = (roomId, lockId) => {
                     <Field label="Height mm" value={activeGlass.height} onChange={(v) => updateGlass(activeGlass.id, "height", v)} inputMode="numeric" />
                   </div>
                   <SelectField label="Outer Pane" value={activeGlass.outerPane} onChange={(v) => updateGlass(activeGlass.id, "outerPane", v)} options={paneThicknessOptions} />
-                  <SelectField label="Spacer Size" value={activeGlass.spacerSize} onChange={(v) => updateGlass(activeGlass.id, "spacerSize", v)} options={spacerSizeOptions} />
-                  <SelectField label="Inner Pane" value={activeGlass.innerPane} onChange={(v) => updateGlass(activeGlass.id, "innerPane", v)} options={paneThicknessOptions} />
-                  <Field label="Overall Thickness" value={activeGlass.overallThickness} onChange={(v) => updateGlass(activeGlass.id, "overallThickness", v)} placeholder="Auto calculated" />
                   <SelectField label="Glass Type" value={activeGlass.type} onChange={(v) => updateGlass(activeGlass.id, "type", v)} options={glassTypeOptions} />
-                  <SelectField label="Spacer Bar Type" value={activeGlass.spacerBar} onChange={(v) => updateGlass(activeGlass.id, "spacerBar", v)} options={spacerBarOptions} />
-                  <SelectField label="Bars / Lead" value={activeGlass.decorativeBar} onChange={(v) => updateGlass(activeGlass.id, "decorativeBar", v)} options={decorativeBarOptions} />
-                  <Field label="Pattern / Design" value={activeGlass.pattern} onChange={(v) => updateGlass(activeGlass.id, "pattern", v)} />
+
+{activeGlass.type !== "Single Glaze" && (
+  <>
+    <SelectField label="Spacer Size" value={activeGlass.spacerSize} onChange={(v) => updateGlass(activeGlass.id, "spacerSize", v)} options={spacerSizeOptions} />
+    <SelectField label="Inner Pane" value={activeGlass.innerPane} onChange={(v) => updateGlass(activeGlass.id, "innerPane", v)} options={paneThicknessOptions} />
+    <SelectField label="Spacer Bar Type" value={activeGlass.spacerBar} onChange={(v) => updateGlass(activeGlass.id, "spacerBar", v)} options={spacerBarOptions} />
+  </>
+)}
+
+<Field label="Overall Thickness" value={activeGlass.overallThickness} onChange={(v) => updateGlass(activeGlass.id, "overallThickness", v)} placeholder="Auto calculated" />
+
+<SelectField label="Bars / Lead" value={activeGlass.decorativeBar} onChange={(v) => updateGlass(activeGlass.id, "decorativeBar", v)} options={decorativeBarOptions} />
+
+{["18mm G Bar", "25mm G Bar"].includes(activeGlass.decorativeBar) && (
+  <Field label="G Bar Colour" value={activeGlass.barColour} onChange={(v) => updateGlass(activeGlass.id, "barColour", v)} placeholder="e.g. White, Black, Anthracite" />
+)}
+
+<SelectField label="Pattern / Design" value={activeGlass.pattern} onChange={(v) => updateGlass(activeGlass.id, "pattern", v)} options={patternOptions} />
                   <div className="sm:col-span-2"><Field label="Notes" value={activeGlass.notes} onChange={(v) => updateGlass(activeGlass.id, "notes", v)} /></div>
                   <div className="sm:col-span-2"><SketchPad title="Glass Sketch" value={activeGlass.sketchImage} onChange={(v) => updateGlass(activeGlass.id, "sketchImage", v)} /></div>
                 </div>
