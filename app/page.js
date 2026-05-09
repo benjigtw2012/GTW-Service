@@ -62,6 +62,8 @@ const lockDetailOptions = {
   "Other Lock / Mechanism": ["Other"],
 };
 
+const roomItemTypeOptions = ["", "Window", "Door", "French Door", "Patio Door", "Composite Door", "Other"];
+
 const otherItems = [
   "Restrictor",
   "Gasket / Seal",
@@ -156,7 +158,8 @@ function emptyRoom() {
     handles: [],
     locks: [],
     other: qtyMap(otherItems),
-    notes: "",
+   items: [],
+notes: "",
   };
 }
 
@@ -435,7 +438,7 @@ function HandlesSection({ room, addHandle, updateHandle, removeHandle }) {
 
 function LocksSection({ room, addLock, updateLock, removeLock }) {
   const locks = Array.isArray(room.locks) ? room.locks : [];
-
+  
   return (
     <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
       <div className="mb-3 flex items-center justify-between gap-3">
@@ -497,6 +500,77 @@ function LocksSection({ room, addLock, updateLock, removeLock }) {
               <Trash2 className="mr-1 inline h-4 w-4" />
               Remove Lock
             </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function RoomItemsSection({ room, addRoomItem, updateRoomItem, removeRoomItem }) {
+  const items = Array.isArray(room.items) ? room.items : [];
+
+  return (
+    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h4 className="text-base font-black uppercase tracking-wide text-slate-700">
+          Windows / Doors in this Room
+        </h4>
+
+        <button
+          onClick={() => addRoomItem(room.id)}
+          className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white no-print"
+        >
+          <Plus className="mr-1 inline h-4 w-4" />
+          Add Window / Door
+        </button>
+      </div>
+
+      {items.length === 0 && (
+        <p className="rounded-2xl bg-white p-4 text-sm font-bold text-slate-500">
+          No windows or doors added yet.
+        </p>
+      )}
+
+      <div className="space-y-3">
+        {items.map((item, index) => (
+          <div key={item.id} className="rounded-2xl bg-white p-4 shadow-sm">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h5 className="font-black">Window / Door {index + 1}</h5>
+
+              <button
+                onClick={() => removeRoomItem(room.id, item.id)}
+                className="rounded-2xl border border-slate-200 px-3 py-2 text-sm font-bold text-red-600 no-print"
+              >
+                <Trash2 className="mr-1 inline h-4 w-4" />
+                Remove
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Field
+                label="Name"
+                value={item.name}
+                onChange={(v) => updateRoomItem(room.id, item.id, "name", v)}
+                placeholder="Kitchen window 1"
+              />
+
+              <SelectField
+                label="Type"
+                value={item.type}
+                onChange={(v) => updateRoomItem(room.id, item.id, "type", v)}
+                options={roomItemTypeOptions}
+              />
+
+              <div className="sm:col-span-2">
+                <TextArea
+                  label="Window / Door Notes"
+                  value={item.notes}
+                  onChange={(v) => updateRoomItem(room.id, item.id, "notes", v)}
+                  placeholder="Opening direction, issue, access notes, etc."
+                />
+              </div>
+            </div>
           </div>
         ))}
       </div>
@@ -880,6 +954,53 @@ const removeLock = (roomId, lockId) => {
     ),
   }));
 };
+
+  const addRoomItem = (roomId) => {
+  setSurvey((prev) => ({
+    ...prev,
+    rooms: prev.rooms.map((room) =>
+      room.id === roomId
+        ? {
+            ...room,
+            items: [
+              ...(Array.isArray(room.items) ? room.items : []),
+              { id: makeId(), name: "", type: "", notes: "" },
+            ],
+          }
+        : room
+    ),
+  }));
+};
+
+const updateRoomItem = (roomId, itemId, key, value) => {
+  setSurvey((prev) => ({
+    ...prev,
+    rooms: prev.rooms.map((room) =>
+      room.id === roomId
+        ? {
+            ...room,
+            items: (Array.isArray(room.items) ? room.items : []).map((item) =>
+              item.id === itemId ? { ...item, [key]: value } : item
+            ),
+          }
+        : room
+    ),
+  }));
+};
+
+const removeRoomItem = (roomId, itemId) => {
+  setSurvey((prev) => ({
+    ...prev,
+    rooms: prev.rooms.map((room) =>
+      room.id === roomId
+        ? {
+            ...room,
+            items: (Array.isArray(room.items) ? room.items : []).filter((item) => item.id !== itemId),
+          }
+        : room
+    ),
+  }));
+};
   
   const updateRoomNotes = (id, value) => {
     setSurvey((prev) => ({ ...prev, rooms: prev.rooms.map((r) => (r.id === id ? { ...r, notes: value } : r)) }));
@@ -1045,6 +1166,13 @@ const removeLock = (roomId, lockId) => {
                   {rooms.length > 1 && <button onClick={() => removeRoom(activeRoom.id)} className="mb-1 rounded-2xl border border-slate-200 p-4 text-slate-500 hover:text-red-600 no-print"><Trash2 className="h-6 w-6" /></button>}
                 </div>
 
+<RoomItemsSection
+  room={activeRoom}
+  addRoomItem={addRoomItem}
+  updateRoomItem={updateRoomItem}
+  removeRoomItem={removeRoomItem}
+/>
+                    
                 <HingesSection room={activeRoom} addHinge={addHinge} updateHinge={updateHinge} removeHinge={removeHinge} />
                 <HandlesSection room={activeRoom} addHandle={addHandle} updateHandle={updateHandle} removeHandle={removeHandle} />
                     
