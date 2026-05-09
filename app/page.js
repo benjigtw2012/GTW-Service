@@ -1537,15 +1537,7 @@ const removeRoomItem = (roomId, itemId) => {
   removeItemHandle={removeItemHandle}
 />
                     
-                <HingesSection room={activeRoom} addHinge={addHinge} updateHinge={updateHinge} removeHinge={removeHinge} />
-                <HandlesSection room={activeRoom} addHandle={addHandle} updateHandle={updateHandle} removeHandle={removeHandle} />
-                    
-                <LocksSection
-  room={activeRoom}
-  addLock={addLock}
-  updateLock={updateLock}
-  removeLock={removeLock}
-/>
+            
     
                 <QtyGrid title="Other Components" items={otherItems} values={activeRoom.other} onChange={(item, v) => updateRoomQty(activeRoom.id, "other", item, v)} />
                 <TextArea label="Room Notes" value={activeRoom.notes} onChange={(v) => updateRoomNotes(activeRoom.id, v)} placeholder="Anything unusual for this room/area" />
