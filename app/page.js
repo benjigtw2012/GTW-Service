@@ -796,7 +796,20 @@ export default function MobileWindowDoorSurveyApp() {
 
   const summary = useMemo(() => {
     const totalHardwareQty = rooms.reduce((sum, room) => {
-      const hingeTotal = Array.isArray(room.hinges) ? room.hinges.reduce((s, h) => s + (Number(h.quantity) || 0), 0) : 0;
+      const hingeTotal = Array.isArray(room.hinges)
+        ? room.hinges.reduce((s, h) => s + (Number(h.quantity) || 0), 0)
+        : 0;
+      
+      const itemHingeTotal = Array.isArray(room.items)
+  ? room.items.reduce(
+      (total, item) =>
+        total +
+        (Array.isArray(item.hinges)
+          ? item.hinges.reduce((s, h) => s + (Number(h.quantity) || 0), 0)
+          : 0),
+      0
+    )
+  : 0;
       const handleTotal = Array.isArray(room.handles) ? room.handles.reduce((s, h) => s + (Number(h.quantity) || 0), 0) : 0;
       const itemHandleTotal = Array.isArray(room.items)
   ? room.items.reduce(
@@ -850,6 +863,18 @@ const groups = [room.other];
 }
    if (Array.isArray(room.items)) {
   room.items.forEach((item) => {
+
+    if (Array.isArray(item.hinges)) {
+      item.hinges.forEach((hinge) => {
+        const n = Number(hinge.quantity) || 0;
+
+        if (hinge.type && hinge.size && n > 0) {
+          const label = `${item.name || item.type || "Window / Door"} - ${hinge.type} ${hinge.size}`;
+          parts[label] = (parts[label] || 0) + n;
+        }
+      });
+    }
+
     if (Array.isArray(item.handles)) {
       item.handles.forEach((handle) => {
         const n = Number(handle.quantity) || 0;
