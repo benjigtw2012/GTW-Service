@@ -801,8 +801,11 @@ export default function MobileWindowDoorSurveyApp() {
       0
     )
   : 0;
-      const handleTotal = Array.isArray(room.handles) ? room.handles.reduce((s, h) => s + (Number(h.quantity) || 0), 0) : 0;
-      const itemHandleTotal = Array.isArray(room.items)
+const handleTotal = Array.isArray(room.handles)
+  ? room.handles.reduce((s, h) => s + (Number(h.quantity) || 0), 0)
+  : 0;
+
+const itemHandleTotal = Array.isArray(room.items)
   ? room.items.reduce(
       (total, item) =>
         total +
@@ -812,10 +815,22 @@ export default function MobileWindowDoorSurveyApp() {
       0
     )
   : 0;
-      const lockTotal = Array.isArray(room.locks)
+
+const lockTotal = Array.isArray(room.locks)
   ? room.locks.reduce((s, l) => s + (Number(l.quantity) || 0), 0)
   : 0;
 
+const itemLockTotal = Array.isArray(room.items)
+  ? room.items.reduce(
+      (total, item) =>
+        total +
+        (Array.isArray(item.locks)
+          ? item.locks.reduce((s, l) => s + (Number(l.quantity) || 0), 0)
+          : 0),
+      0
+    )
+  : 0;
+ 
 const groups = [room.other];
       return sum + hingeTotal + handleTotal + itemHandleTotal + lockTotal + groups.reduce((s, group) => s + Object.values(group || {}).reduce((a, q) => a + (Number(q) || 0), 0), 0);
     }, 0);
@@ -852,7 +867,7 @@ const groups = [room.other];
     }
   });
 }
-   if (Array.isArray(room.items)) {
+ if (Array.isArray(room.items)) {
   room.items.forEach((item) => {
 
     if (Array.isArray(item.hinges)) {
@@ -876,8 +891,34 @@ const groups = [room.other];
         }
       });
     }
+
+    if (Array.isArray(item.locks)) {
+      item.locks.forEach((lock) => {
+        const n = Number(lock.quantity) || 0;
+
+        if (lock.type && n > 0) {
+          let detail = "";
+
+          if (lock.type === "Window Espag Inline" || lock.type === "Window Espag Offset") {
+            detail = lock.backset ? ` - ${lock.backset}` : "";
+          }
+
+          if (lock.type === "Door Mech - Rollers") {
+            detail = `${lock.rollers ? ` - ${lock.rollers} rollers` : ""}${lock.doorBackset ? ` - ${lock.doorBackset}` : ""}`;
+          }
+
+          if (lock.type === "Door Mech Special") {
+            detail = `${lock.lockingPoints ? ` - ${lock.lockingPoints} locking points` : ""}${lock.deadbolt ? ` - deadbolt ${lock.deadbolt}` : ""}${lock.doorBackset ? ` - ${lock.doorBackset}` : ""}`;
+          }
+
+          const label = `${item.name || item.type || "Window / Door"} - ${lock.type}${detail}`;
+          parts[label] = (parts[label] || 0) + n;
+        }
+      });
+    }
+
   });
-}   
+}
 
 [room.other].forEach((group) => {
         Object.entries(group || {}).forEach(([item, qty]) => {
