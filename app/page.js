@@ -832,20 +832,27 @@ const itemLockTotal = Array.isArray(room.items)
   : 0;
  
 const groups = [room.other];
-      return sum + hingeTotal + handleTotal + itemHandleTotal + lockTotal + groups.reduce((s, group) => s + Object.values(group || {}).reduce((a, q) => a + (Number(q) || 0), 0), 0);
-    }, 0);
+      const otherTotal = groups.reduce(
+  (s, group) =>
+    s +
+    Object.values(group || {}).reduce(
+      (a, q) => a + (Number(q) || 0),
+      0
+    ),
+  0
+);
 
-    const parts = {};
-    rooms.forEach((room) => {
-      if (Array.isArray(room.hinges)) {
-        room.hinges.forEach((hinge) => {
-          const n = Number(hinge.quantity) || 0;
-          if (hinge.type && hinge.size && n > 0) {
-            const item = `${hinge.type} ${hinge.size}`;
-            parts[item] = (parts[item] || 0) + n;
-          }
-        });
-      }
+return (
+  sum +
+  hingeTotal +
+  itemHingeTotal +
+  handleTotal +
+  itemHandleTotal +
+  lockTotal +
+  itemLockTotal +
+  otherTotal
+);
+      }, 0);
 
       if (Array.isArray(room.handles)) {
         room.handles.forEach((handle) => {
