@@ -935,6 +935,8 @@ return (
       });
     });
 
+   });
+
     const glassCount = glassRows.filter((g) => [g.location, g.width, g.height, g.notes].some(Boolean)).length;
     return { totalHardwareQty, parts, glassCount, photoCount: photos.length };
   }, [rooms, glassRows, photos]);
