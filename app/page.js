@@ -785,160 +785,139 @@ export default function MobileWindowDoorSurveyApp() {
   const activeGlass = glassRows[Math.min(activeGlassIndex, glassRows.length - 1)] || glassRows[0];
   const activeRoom = rooms[Math.min(activeRoomIndex, rooms.length - 1)] || rooms[0];
 
-  const summary = useMemo(() => {
-    const totalHardwareQty = rooms.reduce((sum, room) => {
-      const hingeTotal = Array.isArray(room.hinges)
-        ? room.hinges.reduce((s, h) => s + (Number(h.quantity) || 0), 0)
-        : 0;
-      
-      const itemHingeTotal = Array.isArray(room.items)
-  ? room.items.reduce(
-      (total, item) =>
-        total +
-        (Array.isArray(item.hinges)
-          ? item.hinges.reduce((s, h) => s + (Number(h.quantity) || 0), 0)
-          : 0),
+const summary = useMemo(() => {
+  const totalHardwareQty = rooms.reduce((sum, room) => {
+    const roomHingeTotal = Array.isArray(room.hinges)
+      ? room.hinges.reduce((s, h) => s + (Number(h.quantity) || 0), 0)
+      : 0;
+
+    const roomHandleTotal = Array.isArray(room.handles)
+      ? room.handles.reduce((s, h) => s + (Number(h.quantity) || 0), 0)
+      : 0;
+
+    const roomLockTotal = Array.isArray(room.locks)
+      ? room.locks.reduce((s, l) => s + (Number(l.quantity) || 0), 0)
+      : 0;
+
+    const roomOtherTotal = Object.values(room.other || {}).reduce(
+      (s, q) => s + (Number(q) || 0),
       0
-    )
-  : 0;
-const handleTotal = Array.isArray(room.handles)
-  ? room.handles.reduce((s, h) => s + (Number(h.quantity) || 0), 0)
-  : 0;
+    );
 
-const itemHandleTotal = Array.isArray(room.items)
-  ? room.items.reduce(
-      (total, item) =>
-        total +
-        (Array.isArray(item.handles)
-          ? item.handles.reduce((s, h) => s + (Number(h.quantity) || 0), 0)
-          : 0),
-      0
-    )
-  : 0;
+    const itemTotal = Array.isArray(room.items)
+      ? room.items.reduce((itemSum, item) => {
+          const itemHinges = Array.isArray(item.hinges)
+            ? item.hinges.reduce((s, h) => s + (Number(h.quantity) || 0), 0)
+            : 0;
 
-const lockTotal = Array.isArray(room.locks)
-  ? room.locks.reduce((s, l) => s + (Number(l.quantity) || 0), 0)
-  : 0;
+          const itemHandles = Array.isArray(item.handles)
+            ? item.handles.reduce((s, h) => s + (Number(h.quantity) || 0), 0)
+            : 0;
 
-const itemLockTotal = Array.isArray(room.items)
-  ? room.items.reduce(
-      (total, item) =>
-        total +
-        (Array.isArray(item.locks)
-          ? item.locks.reduce((s, l) => s + (Number(l.quantity) || 0), 0)
-          : 0),
-      0
-    )
-  : 0;
- 
-const groups = [room.other];
-      const otherTotal = groups.reduce(
-  (s, group) =>
-    s +
-    Object.values(group || {}).reduce(
-      (a, q) => a + (Number(q) || 0),
-      0
-    ),
-  0
-);
+          const itemLocks = Array.isArray(item.locks)
+            ? item.locks.reduce((s, l) => s + (Number(l.quantity) || 0), 0)
+            : 0;
 
-return (
-  sum +
-  hingeTotal +
-  itemHingeTotal +
-  handleTotal +
-  itemHandleTotal +
-  lockTotal +
-  itemLockTotal +
-  otherTotal
-);
-      }, 0);
+          return itemSum + itemHinges + itemHandles + itemLocks;
+        }, 0)
+      : 0;
 
-      if (Array.isArray(room.handles)) {
-        room.handles.forEach((handle) => {
-          const n = Number(handle.quantity) || 0;
-          if (handle.type && handle.colour && n > 0) {
-            const item = `${handle.colour} ${handle.type}`;
-            parts[item] = (parts[item] || 0) + n;
-          }
-        });
-      }
+    return sum + roomHingeTotal + roomHandleTotal + roomLockTotal + roomOtherTotal + itemTotal;
+  }, 0);
 
-      if (Array.isArray(room.locks)) {
-  room.locks.forEach((lock) => {
-    const n = Number(lock.quantity) || 0;
+  const parts = {};
 
-    if (lock.type && lock.detail && n > 0) {
-      const item = `${lock.type} ${lock.detail}`;
-      parts[item] = (parts[item] || 0) + n;
+  const addPart = (label, qty) => {
+    const n = Number(qty) || 0;
+    if (!label || n <= 0) return;
+    parts[label] = (parts[label] || 0) + n;
+  };
+
+  const lockLabel = (lock) => {
+    if (!lock?.type) return "";
+
+    if (lock.type === "Window Espag Inline" || lock.type === "Window Espag Offset") {
+      return `${lock.type}${lock.backset ? ` - ${lock.backset}` : ""}`;
+    }
+
+    if (lock.type === "Door Mech - Rollers") {
+      return `${lock.type}${lock.rollers ? ` - ${lock.rollers} rollers` : ""}${lock.doorBackset ? ` - ${lock.doorBackset}` : ""}`;
+    }
+
+    if (lock.type === "Door Mech Special") {
+      return `${lock.type}${lock.lockingPoints ? ` - ${lock.lockingPoints} locking points` : ""}${lock.deadbolt ? ` - deadbolt ${lock.deadbolt}` : ""}${lock.doorBackset ? ` - ${lock.doorBackset}` : ""}`;
+    }
+
+    return lock.type;
+  };
+
+  rooms.forEach((room) => {
+    if (Array.isArray(room.hinges)) {
+      room.hinges.forEach((hinge) => {
+        if (hinge.type && hinge.size) {
+          addPart(`${hinge.type} ${hinge.size}`, hinge.quantity);
+        }
+      });
+    }
+
+    if (Array.isArray(room.handles)) {
+      room.handles.forEach((handle) => {
+        if (handle.type && handle.colour) {
+          addPart(`${handle.colour} ${handle.type}`, handle.quantity);
+        }
+      });
+    }
+
+    if (Array.isArray(room.locks)) {
+      room.locks.forEach((lock) => {
+        addPart(lockLabel(lock), lock.quantity);
+      });
+    }
+
+    Object.entries(room.other || {}).forEach(([item, qty]) => {
+      addPart(item, qty);
+    });
+
+    if (Array.isArray(room.items)) {
+      room.items.forEach((item) => {
+        const prefix = item.name || item.type || "Window / Door";
+
+        if (Array.isArray(item.hinges)) {
+          item.hinges.forEach((hinge) => {
+            if (hinge.type && hinge.size) {
+              addPart(`${prefix} - ${hinge.type} ${hinge.size}`, hinge.quantity);
+            }
+          });
+        }
+
+        if (Array.isArray(item.handles)) {
+          item.handles.forEach((handle) => {
+            if (handle.type && handle.colour) {
+              addPart(`${prefix} - ${handle.colour} ${handle.type}`, handle.quantity);
+            }
+          });
+        }
+
+        if (Array.isArray(item.locks)) {
+          item.locks.forEach((lock) => {
+            addPart(`${prefix} - ${lockLabel(lock)}`, lock.quantity);
+          });
+        }
+      });
     }
   });
-}
- if (Array.isArray(room.items)) {
-  room.items.forEach((item) => {
 
-    if (Array.isArray(item.hinges)) {
-      item.hinges.forEach((hinge) => {
-        const n = Number(hinge.quantity) || 0;
+  const glassCount = glassRows.filter((g) =>
+    [g.location, g.width, g.height, g.notes].some(Boolean)
+  ).length;
 
-        if (hinge.type && hinge.size && n > 0) {
-          const label = `${item.name || item.type || "Window / Door"} - ${hinge.type} ${hinge.size}`;
-          parts[label] = (parts[label] || 0) + n;
-        }
-      });
-    }
-
-    if (Array.isArray(item.handles)) {
-      item.handles.forEach((handle) => {
-        const n = Number(handle.quantity) || 0;
-
-        if (handle.type && handle.colour && n > 0) {
-          const label = `${item.name || item.type || "Window / Door"} - ${handle.colour} ${handle.type}`;
-          parts[label] = (parts[label] || 0) + n;
-        }
-      });
-    }
-
-    if (Array.isArray(item.locks)) {
-      item.locks.forEach((lock) => {
-        const n = Number(lock.quantity) || 0;
-
-        if (lock.type && n > 0) {
-          let detail = "";
-
-          if (lock.type === "Window Espag Inline" || lock.type === "Window Espag Offset") {
-            detail = lock.backset ? ` - ${lock.backset}` : "";
-          }
-
-          if (lock.type === "Door Mech - Rollers") {
-            detail = `${lock.rollers ? ` - ${lock.rollers} rollers` : ""}${lock.doorBackset ? ` - ${lock.doorBackset}` : ""}`;
-          }
-
-          if (lock.type === "Door Mech Special") {
-            detail = `${lock.lockingPoints ? ` - ${lock.lockingPoints} locking points` : ""}${lock.deadbolt ? ` - deadbolt ${lock.deadbolt}` : ""}${lock.doorBackset ? ` - ${lock.doorBackset}` : ""}`;
-          }
-
-          const label = `${item.name || item.type || "Window / Door"} - ${lock.type}${detail}`;
-          parts[label] = (parts[label] || 0) + n;
-        }
-      });
-    }
-
-  });
-}
-
-[room.other].forEach((group) => {
-        Object.entries(group || {}).forEach(([item, qty]) => {
-          const n = Number(qty) || 0;
-          if (n > 0) parts[item] = (parts[item] || 0) + n;
-        });
-      });
-
-    const glassCount = glassRows.filter((g) => [g.location, g.width, g.height, g.notes].some(Boolean)).length;
-    return { totalHardwareQty, parts, glassCount, photoCount: photos.length };
-  }, [rooms, glassRows, photos]);
-
-  const saveSurvey = () => {
+  return {
+    totalHardwareQty,
+    parts,
+    glassCount,
+    photoCount: photos.length,
+  };
+}, [rooms, glassRows, photos]);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(survey));
     alert("Survey saved on this device.");
   };
