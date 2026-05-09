@@ -517,10 +517,10 @@ function RoomItemsSection({
   addItemHinge,
   updateItemHinge,
   removeItemHinge,
-    addItemHandle,
+  addItemHandle,
   updateItemHandle,
   removeItemHandle,
-    addItemLock,
+  addItemLock,
   updateItemLock,
   removeItemLock,
 }) {
@@ -591,254 +591,115 @@ function RoomItemsSection({
             <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <h6 className="font-black text-slate-700">Hinges for this Window / Door</h6>
-
-                <button
-                  onClick={() => addItemHinge(room.id, item.id)}
-                  className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white no-print"
-                >
+                <button onClick={() => addItemHinge(room.id, item.id)} className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white no-print">
                   <Plus className="mr-1 inline h-4 w-4" />
                   Add Hinge
                 </button>
               </div>
 
-              {(Array.isArray(item.hinges) ? item.hinges : []).length === 0 && (
-                <p className="rounded-2xl bg-white p-3 text-sm font-bold text-slate-500">
-                  No hinges added to this item yet.
-                </p>
-              )}
+              {(Array.isArray(item.hinges) ? item.hinges : []).map((hinge) => (
+                <div key={hinge.id} className="mb-3 rounded-2xl bg-white p-3 shadow-sm">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <SelectField label="Hinge Type" value={hinge.type} onChange={(v) => updateItemHinge(room.id, item.id, hinge.id, "type", v)} options={hingeTypeOptions} />
 
-              <div className="space-y-3">
-                {(Array.isArray(item.hinges) ? item.hinges : []).map((hinge) => (
-                  <div key={hinge.id} className="rounded-2xl bg-white p-3 shadow-sm">
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                      <SelectField
-                        label="Hinge Type"
-                        value={hinge.type}
-                        onChange={(v) => updateItemHinge(room.id, item.id, hinge.id, "type", v)}
-                        options={hingeTypeOptions}
-                      />
+                    {hinge.type && (
+                      <SelectField label="Hinge Size" value={hinge.size} onChange={(v) => updateItemHinge(room.id, item.id, hinge.id, "size", v)} options={["", ...(hingeSizeOptions[hinge.type] || [])]} />
+                    )}
 
-                      {hinge.type && (
-                        <SelectField
-                          label="Hinge Size"
-                          value={hinge.size}
-                          onChange={(v) => updateItemHinge(room.id, item.id, hinge.id, "size", v)}
-                          options={["", ...(hingeSizeOptions[hinge.type] || [])]}
-                        />
-                      )}
-
-                      {hinge.size && (
-                        <Field
-                          label="Quantity"
-                          value={hinge.quantity}
-                          onChange={(v) => updateItemHinge(room.id, item.id, hinge.id, "quantity", v)}
-                          inputMode="numeric"
-                          placeholder="Qty"
-                        />
-                      )}
-                    </div>
-
-                    <button
-                      onClick={() => removeItemHinge(room.id, item.id, hinge.id)}
-                      className="mt-3 rounded-2xl border border-slate-200 px-3 py-2 text-sm font-bold text-red-600 no-print"
-                    >
-                      <Trash2 className="mr-1 inline h-4 w-4" />
-                      Remove Hinge
-                    </button>
+                    {hinge.size && (
+                      <Field label="Quantity" value={hinge.quantity} onChange={(v) => updateItemHinge(room.id, item.id, hinge.id, "quantity", v)} inputMode="numeric" placeholder="Qty" />
+                    )}
                   </div>
-                ))}
-              </div>
+
+                  <button onClick={() => removeItemHinge(room.id, item.id, hinge.id)} className="mt-3 rounded-2xl border border-slate-200 px-3 py-2 text-sm font-bold text-red-600 no-print">
+                    Remove Hinge
+                  </button>
+                </div>
+              ))}
             </div>
-                  
-          <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-  <div className="mb-3 flex items-center justify-between gap-3">
-    <h6 className="font-black text-slate-700">Handles for this Window / Door</h6>
 
-    <button
-      onClick={() => addItemHandle(room.id, item.id)}
-      className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white no-print"
-    >
-      <Plus className="mr-1 inline h-4 w-4" />
-      Add Handle
-    </button>
-  </div>
-
-  {(Array.isArray(item.handles) ? item.handles : []).length === 0 && (
-    <p className="rounded-2xl bg-white p-3 text-sm font-bold text-slate-500">
-      No handles added to this item yet.
-    </p>
-  )}
-
-  <div className="space-y-3">
-    {(Array.isArray(item.handles) ? item.handles : []).map((handle) => (
-      <div key={handle.id} className="rounded-2xl bg-white p-3 shadow-sm">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-
-          <SelectField
-            label="Handle Type"
-            value={handle.type}
-            onChange={(v) => updateItemHandle(room.id, item.id, handle.id, "type", v)}
-            options={handleTypeOptions}
-          />
-
-          {handle.type && (
-            <SelectField
-              label="Colour"
-              value={handle.colour}
-              onChange={(v) => updateItemHandle(room.id, item.id, handle.id, "colour", v)}
-              options={["", ...(handleColourOptions[handle.type] || [])]}
-            />
-          )}
-
-          {handle.colour && (
-            <Field
-              label="Quantity"
-              value={handle.quantity}
-              onChange={(v) => updateItemHandle(room.id, item.id, handle.id, "quantity", v)}
-              inputMode="numeric"
-              placeholder="Qty"
-            />
-          )}
-        </div>
-
-        <button
-          onClick={() => removeItemHandle(room.id, item.id, handle.id)}
-          className="mt-3 rounded-2xl border border-slate-200 px-3 py-2 text-sm font-bold text-red-600 no-print"
-        >
-          <Trash2 className="mr-1 inline h-4 w-4" />
-          Remove Handle
-        </button>
             <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-  <div className="mb-3 flex items-center justify-between gap-3">
-    <h6 className="font-black text-slate-700">Locks for this Window / Door</h6>
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h6 className="font-black text-slate-700">Handles for this Window / Door</h6>
+                <button onClick={() => addItemHandle(room.id, item.id)} className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white no-print">
+                  <Plus className="mr-1 inline h-4 w-4" />
+                  Add Handle
+                </button>
+              </div>
 
-    <button
-      onClick={() => addItemLock(room.id, item.id)}
-      className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white no-print"
-    >
-      <Plus className="mr-1 inline h-4 w-4" />
-      Add Lock
-    </button>
-  </div>
+              {(Array.isArray(item.handles) ? item.handles : []).map((handle) => (
+                <div key={handle.id} className="mb-3 rounded-2xl bg-white p-3 shadow-sm">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <SelectField label="Handle Type" value={handle.type} onChange={(v) => updateItemHandle(room.id, item.id, handle.id, "type", v)} options={handleTypeOptions} />
 
-  {(Array.isArray(item.locks) ? item.locks : []).length === 0 && (
-    <p className="rounded-2xl bg-white p-3 text-sm font-bold text-slate-500">
-      No locks added to this item yet.
-    </p>
-  )}
+                    {handle.type && (
+                      <SelectField label="Colour" value={handle.colour} onChange={(v) => updateItemHandle(room.id, item.id, handle.id, "colour", v)} options={["", ...(handleColourOptions[handle.type] || [])]} />
+                    )}
 
-  <div className="space-y-3">
-    {(Array.isArray(item.locks) ? item.locks : []).map((lock) => (
-      <div key={lock.id} className="rounded-2xl bg-white p-3 shadow-sm">
+                    {handle.colour && (
+                      <Field label="Quantity" value={handle.quantity} onChange={(v) => updateItemHandle(room.id, item.id, handle.id, "quantity", v)} inputMode="numeric" placeholder="Qty" />
+                    )}
+                  </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <button onClick={() => removeItemHandle(room.id, item.id, handle.id)} className="mt-3 rounded-2xl border border-slate-200 px-3 py-2 text-sm font-bold text-red-600 no-print">
+                    Remove Handle
+                  </button>
+                </div>
+              ))}
+            </div>
 
-          <SelectField
-            label="Lock Type"
-            value={lock.type}
-            onChange={(v) => updateItemLock(room.id, item.id, lock.id, "type", v)}
-            options={lockTypeOptions}
-          />
+            <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h6 className="font-black text-slate-700">Locks for this Window / Door</h6>
+                <button onClick={() => addItemLock(room.id, item.id)} className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white no-print">
+                  <Plus className="mr-1 inline h-4 w-4" />
+                  Add Lock
+                </button>
+              </div>
 
-          {(lock.type === "Window Espag Inline" || lock.type === "Window Espag Offset") && (
-            <>
-              <SelectField
-                label="Backset"
-                value={lock.backset}
-                onChange={(v) => updateItemLock(room.id, item.id, lock.id, "backset", v)}
-                options={lockBacksetOptions}
-              />
+              {(Array.isArray(item.locks) ? item.locks : []).map((lock) => (
+                <div key={lock.id} className="mb-3 rounded-2xl bg-white p-3 shadow-sm">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <SelectField label="Lock Type" value={lock.type} onChange={(v) => updateItemLock(room.id, item.id, lock.id, "type", v)} options={lockTypeOptions} />
 
-              <Field
-                label="Quantity"
-                value={lock.quantity}
-                onChange={(v) => updateItemLock(room.id, item.id, lock.id, "quantity", v)}
-                inputMode="numeric"
-                placeholder="Qty"
-              />
-            </>
-          )}
+                    {(lock.type === "Window Espag Inline" || lock.type === "Window Espag Offset") && (
+                      <>
+                        <SelectField label="Backset" value={lock.backset} onChange={(v) => updateItemLock(room.id, item.id, lock.id, "backset", v)} options={lockBacksetOptions} />
+                        <Field label="Quantity" value={lock.quantity} onChange={(v) => updateItemLock(room.id, item.id, lock.id, "quantity", v)} inputMode="numeric" placeholder="Qty" />
+                      </>
+                    )}
 
-          {lock.type === "Door Mech - Rollers" && (
-            <>
-              <SelectField
-                label="Rollers"
-                value={lock.rollers}
-                onChange={(v) => updateItemLock(room.id, item.id, lock.id, "rollers", v)}
-                options={doorRollerOptions}
-              />
+                    {lock.type === "Door Mech - Rollers" && (
+                      <>
+                        <SelectField label="Rollers" value={lock.rollers} onChange={(v) => updateItemLock(room.id, item.id, lock.id, "rollers", v)} options={doorRollerOptions} />
+                        <SelectField label="Backset" value={lock.doorBackset} onChange={(v) => updateItemLock(room.id, item.id, lock.id, "doorBackset", v)} options={doorBacksetOptions} />
+                        <Field label="Quantity" value={lock.quantity} onChange={(v) => updateItemLock(room.id, item.id, lock.id, "quantity", v)} inputMode="numeric" placeholder="Qty" />
+                      </>
+                    )}
 
-              <SelectField
-                label="Backset"
-                value={lock.doorBackset}
-                onChange={(v) => updateItemLock(room.id, item.id, lock.id, "doorBackset", v)}
-                options={doorBacksetOptions}
-              />
+                    {lock.type === "Door Mech Special" && (
+                      <>
+                        <Field label="Locking Points" value={lock.lockingPoints} onChange={(v) => updateItemLock(room.id, item.id, lock.id, "lockingPoints", v)} />
+                        <Field label="Deadbolt" value={lock.deadbolt} onChange={(v) => updateItemLock(room.id, item.id, lock.id, "deadbolt", v)} />
+                        <Field label="Backset" value={lock.doorBackset} onChange={(v) => updateItemLock(room.id, item.id, lock.id, "doorBackset", v)} />
+                        <Field label="Quantity" value={lock.quantity} onChange={(v) => updateItemLock(room.id, item.id, lock.id, "quantity", v)} inputMode="numeric" placeholder="Qty" />
+                      </>
+                    )}
+                  </div>
 
-              <Field
-                label="Quantity"
-                value={lock.quantity}
-                onChange={(v) => updateItemLock(room.id, item.id, lock.id, "quantity", v)}
-                inputMode="numeric"
-                placeholder="Qty"
-              />
-            </>
-          )}
+                  {lock.type === "Door Mech Special" && (
+                    <div className="mt-3">
+                      <TextArea label="Special Notes" value={lock.specialNotes} onChange={(v) => updateItemLock(room.id, item.id, lock.id, "specialNotes", v)} placeholder="Any identifying information for sourcing" />
+                    </div>
+                  )}
 
-          {lock.type === "Door Mech Special" && (
-            <>
-              <Field
-                label="Locking Points"
-                value={lock.lockingPoints}
-                onChange={(v) => updateItemLock(room.id, item.id, lock.id, "lockingPoints", v)}
-              />
-
-              <Field
-                label="Deadbolt"
-                value={lock.deadbolt}
-                onChange={(v) => updateItemLock(room.id, item.id, lock.id, "deadbolt", v)}
-              />
-
-              <Field
-                label="Backset"
-                value={lock.doorBackset}
-                onChange={(v) => updateItemLock(room.id, item.id, lock.id, "doorBackset", v)}
-              />
-
-              <Field
-                label="Quantity"
-                value={lock.quantity}
-                onChange={(v) => updateItemLock(room.id, item.id, lock.id, "quantity", v)}
-                inputMode="numeric"
-                placeholder="Qty"
-              />
-            </>
-          )}
-
-        </div>
-
-        {lock.type === "Door Mech Special" && (
-          <div className="mt-3">
-            <TextArea
-              label="Special Notes"
-              value={lock.specialNotes}
-              onChange={(v) => updateItemLock(room.id, item.id, lock.id, "specialNotes", v)}
-              placeholder="Any identifying information for sourcing"
-            />
+                  <button onClick={() => removeItemLock(room.id, item.id, lock.id)} className="mt-3 rounded-2xl border border-slate-200 px-3 py-2 text-sm font-bold text-red-600 no-print">
+                    Remove Lock
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
-        )}
-
-        <button
-          onClick={() => removeItemLock(room.id, item.id, lock.id)}
-          className="mt-3 rounded-2xl border border-slate-200 px-3 py-2 text-sm font-bold text-red-600 no-print"
-        >
-          <Trash2 className="mr-1 inline h-4 w-4" />
-          Remove Lock
-        </button>
-      </div>
-    ))}
-  </div>
-
         ))}
       </div>
     </div>
