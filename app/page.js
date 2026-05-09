@@ -839,7 +839,6 @@ function RoomItemsSection({
     ))}
   </div>
 
-                </div>
         ))}
       </div>
     </div>
