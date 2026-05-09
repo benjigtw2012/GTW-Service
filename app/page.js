@@ -53,6 +53,17 @@ const doorRollerOptions = ["", "2", "4"];
 
 const doorBacksetOptions = ["", "28mm", "30mm", "32mm", "35mm", "Other"];
 
+const lockDetailOptions = {
+  "Multipoint Lock": ["GU", "Yale", "Mila", "Fullex", "Other"],
+  "Gearbox Only": ["35mm", "45mm", "55mm", "Other"],
+  "Window Lock": ["Inline", "Offset", "Cockspur", "Other"],
+  "Shootbolt Gearbox": ["Mila", "Saracen", "Other"],
+  "Espag Mechanism": ["200mm", "400mm", "600mm", "Other"],
+  "Door Cylinder": ["Euro", "Thumbturn", "Anti Snap", "Other"],
+  "Patio Door Lock": ["Hook", "Slider", "Other"],
+  "Other Lock / Mechanism": ["Other"],
+};
+
 const roomItemTypeOptions = ["", "Window", "Door", "French Door", "Patio Door", "Composite Door", "Other"];
 
 const otherItems = [
@@ -427,6 +438,77 @@ function HandlesSection({ room, addHandle, updateHandle, removeHandle }) {
   );
 }
 
+function LocksSection({ room, addLock, updateLock, removeLock }) {
+  const locks = Array.isArray(room.locks) ? room.locks : [];
+  
+  return (
+    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h4 className="text-base font-black uppercase tracking-wide text-slate-700">
+          Locks / Mechanisms
+        </h4>
+
+        <button
+          onClick={() => addLock(room.id)}
+          className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white no-print"
+        >
+          <Plus className="mr-1 inline h-4 w-4" />
+          Add Lock
+        </button>
+      </div>
+
+      {locks.length === 0 && (
+        <p className="rounded-2xl bg-white p-4 text-sm font-bold text-slate-500">
+          No locks added yet.
+        </p>
+      )}
+
+      <div className="space-y-3">
+        {locks.map((lock) => (
+          <div key={lock.id} className="rounded-2xl bg-white p-4 shadow-sm">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+
+              <SelectField
+                label="Lock Type"
+                value={lock.type}
+                onChange={(v) => updateLock(room.id, lock.id, "type", v)}
+                options={lockTypeOptions}
+              />
+
+              {lock.type && (
+                <SelectField
+                  label="Detail"
+                  value={lock.detail}
+                  onChange={(v) => updateLock(room.id, lock.id, "detail", v)}
+                  options={["", ...(lockDetailOptions[lock.type] || [])]}
+                />
+              )}
+
+              {lock.detail && (
+                <Field
+                  label="Quantity"
+                  value={lock.quantity}
+                  onChange={(v) => updateLock(room.id, lock.id, "quantity", v)}
+                  inputMode="numeric"
+                  placeholder="Qty"
+                />
+              )}
+            </div>
+
+            <button
+              onClick={() => removeLock(room.id, lock.id)}
+              className="mt-3 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-bold text-red-600 no-print"
+            >
+              <Trash2 className="mr-1 inline h-4 w-4" />
+              Remove Lock
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function RoomItemsSection({
   room,
   addRoomItem,
@@ -508,261 +590,114 @@ function RoomItemsSection({
 
             <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
               <div className="mb-3 flex items-center justify-between gap-3">
-                <h6 className="font-black text-slate-700">
-                  Hinges for this Window / Door
-                </h6>
-
-                <button
-                  onClick={() => addItemHinge(room.id, item.id)}
-                  className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white no-print"
-                >
+                <h6 className="font-black text-slate-700">Hinges for this Window / Door</h6>
+                <button onClick={() => addItemHinge(room.id, item.id)} className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white no-print">
                   <Plus className="mr-1 inline h-4 w-4" />
                   Add Hinge
                 </button>
               </div>
 
-              {(Array.isArray(item.hinges) ? item.hinges : []).length === 0 && (
-                <p className="rounded-2xl bg-white p-3 text-sm font-bold text-slate-500">
-                  No hinges added to this item yet.
-                </p>
-              )}
+              {(Array.isArray(item.hinges) ? item.hinges : []).map((hinge) => (
+                <div key={hinge.id} className="mb-3 rounded-2xl bg-white p-3 shadow-sm">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <SelectField label="Hinge Type" value={hinge.type} onChange={(v) => updateItemHinge(room.id, item.id, hinge.id, "type", v)} options={hingeTypeOptions} />
 
-              <div className="space-y-3">
-                {(Array.isArray(item.hinges) ? item.hinges : []).map((hinge) => (
-                  <div key={hinge.id} className="rounded-2xl bg-white p-3 shadow-sm">
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                      <SelectField
-                        label="Hinge Type"
-                        value={hinge.type}
-                        onChange={(v) => updateItemHinge(room.id, item.id, hinge.id, "type", v)}
-                        options={hingeTypeOptions}
-                      />
+                    {hinge.type && (
+                      <SelectField label="Hinge Size" value={hinge.size} onChange={(v) => updateItemHinge(room.id, item.id, hinge.id, "size", v)} options={["", ...(hingeSizeOptions[hinge.type] || [])]} />
+                    )}
 
-                      {hinge.type && (
-                        <SelectField
-                          label="Hinge Size"
-                          value={hinge.size}
-                          onChange={(v) => updateItemHinge(room.id, item.id, hinge.id, "size", v)}
-                          options={["", ...(hingeSizeOptions[hinge.type] || [])]}
-                        />
-                      )}
-
-                      {hinge.size && (
-                        <Field
-                          label="Quantity"
-                          value={hinge.quantity}
-                          onChange={(v) => updateItemHinge(room.id, item.id, hinge.id, "quantity", v)}
-                          inputMode="numeric"
-                          placeholder="Qty"
-                        />
-                      )}
-                    </div>
-
-                    <button
-                      onClick={() => removeItemHinge(room.id, item.id, hinge.id)}
-                      className="mt-3 rounded-2xl border border-slate-200 px-3 py-2 text-sm font-bold text-red-600 no-print"
-                    >
-                      <Trash2 className="mr-1 inline h-4 w-4" />
-                      Remove Hinge
-                    </button>
+                    {hinge.size && (
+                      <Field label="Quantity" value={hinge.quantity} onChange={(v) => updateItemHinge(room.id, item.id, hinge.id, "quantity", v)} inputMode="numeric" placeholder="Qty" />
+                    )}
                   </div>
-                ))}
-              </div>
+
+                  <button onClick={() => removeItemHinge(room.id, item.id, hinge.id)} className="mt-3 rounded-2xl border border-slate-200 px-3 py-2 text-sm font-bold text-red-600 no-print">
+                    Remove Hinge
+                  </button>
+                </div>
+              ))}
             </div>
 
             <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
               <div className="mb-3 flex items-center justify-between gap-3">
-                <h6 className="font-black text-slate-700">
-                  Handles for this Window / Door
-                </h6>
-
-                <button
-                  onClick={() => addItemHandle(room.id, item.id)}
-                  className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white no-print"
-                >
+                <h6 className="font-black text-slate-700">Handles for this Window / Door</h6>
+                <button onClick={() => addItemHandle(room.id, item.id)} className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white no-print">
                   <Plus className="mr-1 inline h-4 w-4" />
                   Add Handle
                 </button>
               </div>
 
-              {(Array.isArray(item.handles) ? item.handles : []).length === 0 && (
-                <p className="rounded-2xl bg-white p-3 text-sm font-bold text-slate-500">
-                  No handles added to this item yet.
-                </p>
-              )}
+              {(Array.isArray(item.handles) ? item.handles : []).map((handle) => (
+                <div key={handle.id} className="mb-3 rounded-2xl bg-white p-3 shadow-sm">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <SelectField label="Handle Type" value={handle.type} onChange={(v) => updateItemHandle(room.id, item.id, handle.id, "type", v)} options={handleTypeOptions} />
 
-              <div className="space-y-3">
-                {(Array.isArray(item.handles) ? item.handles : []).map((handle) => (
-                  <div key={handle.id} className="rounded-2xl bg-white p-3 shadow-sm">
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                      <SelectField
-                        label="Handle Type"
-                        value={handle.type}
-                        onChange={(v) => updateItemHandle(room.id, item.id, handle.id, "type", v)}
-                        options={handleTypeOptions}
-                      />
+                    {handle.type && (
+                      <SelectField label="Colour" value={handle.colour} onChange={(v) => updateItemHandle(room.id, item.id, handle.id, "colour", v)} options={["", ...(handleColourOptions[handle.type] || [])]} />
+                    )}
 
-                      {handle.type && (
-                        <SelectField
-                          label="Colour"
-                          value={handle.colour}
-                          onChange={(v) => updateItemHandle(room.id, item.id, handle.id, "colour", v)}
-                          options={["", ...(handleColourOptions[handle.type] || [])]}
-                        />
-                      )}
-
-                      {handle.colour && (
-                        <Field
-                          label="Quantity"
-                          value={handle.quantity}
-                          onChange={(v) => updateItemHandle(room.id, item.id, handle.id, "quantity", v)}
-                          inputMode="numeric"
-                          placeholder="Qty"
-                        />
-                      )}
-                    </div>
-
-                    <button
-                      onClick={() => removeItemHandle(room.id, item.id, handle.id)}
-                      className="mt-3 rounded-2xl border border-slate-200 px-3 py-2 text-sm font-bold text-red-600 no-print"
-                    >
-                      <Trash2 className="mr-1 inline h-4 w-4" />
-                      Remove Handle
-                    </button>
+                    {handle.colour && (
+                      <Field label="Quantity" value={handle.quantity} onChange={(v) => updateItemHandle(room.id, item.id, handle.id, "quantity", v)} inputMode="numeric" placeholder="Qty" />
+                    )}
                   </div>
-                ))}
-              </div>
+
+                  <button onClick={() => removeItemHandle(room.id, item.id, handle.id)} className="mt-3 rounded-2xl border border-slate-200 px-3 py-2 text-sm font-bold text-red-600 no-print">
+                    Remove Handle
+                  </button>
+                </div>
+              ))}
             </div>
 
             <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
               <div className="mb-3 flex items-center justify-between gap-3">
-                <h6 className="font-black text-slate-700">
-                  Locks for this Window / Door
-                </h6>
-
-                <button
-                  onClick={() => addItemLock(room.id, item.id)}
-                  className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white no-print"
-                >
+                <h6 className="font-black text-slate-700">Locks for this Window / Door</h6>
+                <button onClick={() => addItemLock(room.id, item.id)} className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white no-print">
                   <Plus className="mr-1 inline h-4 w-4" />
                   Add Lock
                 </button>
               </div>
 
-              {(Array.isArray(item.locks) ? item.locks : []).length === 0 && (
-                <p className="rounded-2xl bg-white p-3 text-sm font-bold text-slate-500">
-                  No locks added to this item yet.
-                </p>
-              )}
+              {(Array.isArray(item.locks) ? item.locks : []).map((lock) => (
+                <div key={lock.id} className="mb-3 rounded-2xl bg-white p-3 shadow-sm">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <SelectField label="Lock Type" value={lock.type} onChange={(v) => updateItemLock(room.id, item.id, lock.id, "type", v)} options={lockTypeOptions} />
 
-              <div className="space-y-3">
-                {(Array.isArray(item.locks) ? item.locks : []).map((lock) => (
-                  <div key={lock.id} className="rounded-2xl bg-white p-3 shadow-sm">
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                      <SelectField
-                        label="Lock Type"
-                        value={lock.type}
-                        onChange={(v) => updateItemLock(room.id, item.id, lock.id, "type", v)}
-                        options={lockTypeOptions}
-                      />
-
-                      {(lock.type === "Window Espag Inline" || lock.type === "Window Espag Offset") && (
-                        <>
-                          <SelectField
-                            label="Backset"
-                            value={lock.backset}
-                            onChange={(v) => updateItemLock(room.id, item.id, lock.id, "backset", v)}
-                            options={lockBacksetOptions}
-                          />
-
-                          <Field
-                            label="Quantity"
-                            value={lock.quantity}
-                            onChange={(v) => updateItemLock(room.id, item.id, lock.id, "quantity", v)}
-                            inputMode="numeric"
-                            placeholder="Qty"
-                          />
-                        </>
-                      )}
-
-                      {lock.type === "Door Mech - Rollers" && (
-                        <>
-                          <SelectField
-                            label="Rollers"
-                            value={lock.rollers}
-                            onChange={(v) => updateItemLock(room.id, item.id, lock.id, "rollers", v)}
-                            options={doorRollerOptions}
-                          />
-
-                          <SelectField
-                            label="Backset"
-                            value={lock.doorBackset}
-                            onChange={(v) => updateItemLock(room.id, item.id, lock.id, "doorBackset", v)}
-                            options={doorBacksetOptions}
-                          />
-
-                          <Field
-                            label="Quantity"
-                            value={lock.quantity}
-                            onChange={(v) => updateItemLock(room.id, item.id, lock.id, "quantity", v)}
-                            inputMode="numeric"
-                            placeholder="Qty"
-                          />
-                        </>
-                      )}
-
-                      {lock.type === "Door Mech Special" && (
-                        <>
-                          <Field
-                            label="Locking Points"
-                            value={lock.lockingPoints}
-                            onChange={(v) => updateItemLock(room.id, item.id, lock.id, "lockingPoints", v)}
-                          />
-
-                          <Field
-                            label="Deadbolt"
-                            value={lock.deadbolt}
-                            onChange={(v) => updateItemLock(room.id, item.id, lock.id, "deadbolt", v)}
-                          />
-
-                          <Field
-                            label="Backset"
-                            value={lock.doorBackset}
-                            onChange={(v) => updateItemLock(room.id, item.id, lock.id, "doorBackset", v)}
-                          />
-
-                          <Field
-                            label="Quantity"
-                            value={lock.quantity}
-                            onChange={(v) => updateItemLock(room.id, item.id, lock.id, "quantity", v)}
-                            inputMode="numeric"
-                            placeholder="Qty"
-                          />
-                        </>
-                      )}
-                    </div>
-
-                    {lock.type === "Door Mech Special" && (
-                      <div className="mt-3">
-                        <TextArea
-                          label="Special Notes"
-                          value={lock.specialNotes}
-                          onChange={(v) => updateItemLock(room.id, item.id, lock.id, "specialNotes", v)}
-                          placeholder="Any identifying information for sourcing"
-                        />
-                      </div>
+                    {(lock.type === "Window Espag Inline" || lock.type === "Window Espag Offset") && (
+                      <>
+                        <SelectField label="Backset" value={lock.backset} onChange={(v) => updateItemLock(room.id, item.id, lock.id, "backset", v)} options={lockBacksetOptions} />
+                        <Field label="Quantity" value={lock.quantity} onChange={(v) => updateItemLock(room.id, item.id, lock.id, "quantity", v)} inputMode="numeric" placeholder="Qty" />
+                      </>
                     )}
 
-                    <button
-                      onClick={() => removeItemLock(room.id, item.id, lock.id)}
-                      className="mt-3 rounded-2xl border border-slate-200 px-3 py-2 text-sm font-bold text-red-600 no-print"
-                    >
-                      <Trash2 className="mr-1 inline h-4 w-4" />
-                      Remove Lock
-                    </button>
+                    {lock.type === "Door Mech - Rollers" && (
+                      <>
+                        <SelectField label="Rollers" value={lock.rollers} onChange={(v) => updateItemLock(room.id, item.id, lock.id, "rollers", v)} options={doorRollerOptions} />
+                        <SelectField label="Backset" value={lock.doorBackset} onChange={(v) => updateItemLock(room.id, item.id, lock.id, "doorBackset", v)} options={doorBacksetOptions} />
+                        <Field label="Quantity" value={lock.quantity} onChange={(v) => updateItemLock(room.id, item.id, lock.id, "quantity", v)} inputMode="numeric" placeholder="Qty" />
+                      </>
+                    )}
+
+                    {lock.type === "Door Mech Special" && (
+                      <>
+                        <Field label="Locking Points" value={lock.lockingPoints} onChange={(v) => updateItemLock(room.id, item.id, lock.id, "lockingPoints", v)} />
+                        <Field label="Deadbolt" value={lock.deadbolt} onChange={(v) => updateItemLock(room.id, item.id, lock.id, "deadbolt", v)} />
+                        <Field label="Backset" value={lock.doorBackset} onChange={(v) => updateItemLock(room.id, item.id, lock.id, "doorBackset", v)} />
+                        <Field label="Quantity" value={lock.quantity} onChange={(v) => updateItemLock(room.id, item.id, lock.id, "quantity", v)} inputMode="numeric" placeholder="Qty" />
+                      </>
+                    )}
                   </div>
-                ))}
-              </div>
+
+                  {lock.type === "Door Mech Special" && (
+                    <div className="mt-3">
+                      <TextArea label="Special Notes" value={lock.specialNotes} onChange={(v) => updateItemLock(room.id, item.id, lock.id, "specialNotes", v)} placeholder="Any identifying information for sourcing" />
+                    </div>
+                  )}
+
+                  <button onClick={() => removeItemLock(room.id, item.id, lock.id)} className="mt-3 rounded-2xl border border-slate-200 px-3 py-2 text-sm font-bold text-red-600 no-print">
+                    Remove Lock
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
         ))}
@@ -770,6 +705,7 @@ function RoomItemsSection({
     </div>
   );
 }
+
 
 function downloadTextFile(filename, content, type = "application/json") {
   const blob = new Blob([content], { type });
@@ -849,139 +785,154 @@ export default function MobileWindowDoorSurveyApp() {
   const activeGlass = glassRows[Math.min(activeGlassIndex, glassRows.length - 1)] || glassRows[0];
   const activeRoom = rooms[Math.min(activeRoomIndex, rooms.length - 1)] || rooms[0];
 
-const summary = useMemo(() => {
-  const totalHardwareQty = rooms.reduce((sum, room) => {
-    const roomHingeTotal = Array.isArray(room.hinges)
-      ? room.hinges.reduce((s, h) => s + (Number(h.quantity) || 0), 0)
-      : 0;
-
-    const roomHandleTotal = Array.isArray(room.handles)
-      ? room.handles.reduce((s, h) => s + (Number(h.quantity) || 0), 0)
-      : 0;
-
-    const roomLockTotal = Array.isArray(room.locks)
-      ? room.locks.reduce((s, l) => s + (Number(l.quantity) || 0), 0)
-      : 0;
-
-    const roomOtherTotal = Object.values(room.other || {}).reduce(
-      (s, q) => s + (Number(q) || 0),
+  const summary = useMemo(() => {
+    const totalHardwareQty = rooms.reduce((sum, room) => {
+      const hingeTotal = Array.isArray(room.hinges)
+        ? room.hinges.reduce((s, h) => s + (Number(h.quantity) || 0), 0)
+        : 0;
+      
+      const itemHingeTotal = Array.isArray(room.items)
+  ? room.items.reduce(
+      (total, item) =>
+        total +
+        (Array.isArray(item.hinges)
+          ? item.hinges.reduce((s, h) => s + (Number(h.quantity) || 0), 0)
+          : 0),
       0
-    );
+    )
+  : 0;
+const handleTotal = Array.isArray(room.handles)
+  ? room.handles.reduce((s, h) => s + (Number(h.quantity) || 0), 0)
+  : 0;
 
-    const itemTotal = Array.isArray(room.items)
-      ? room.items.reduce((itemSum, item) => {
-          const itemHinges = Array.isArray(item.hinges)
-            ? item.hinges.reduce((s, h) => s + (Number(h.quantity) || 0), 0)
-            : 0;
+const itemHandleTotal = Array.isArray(room.items)
+  ? room.items.reduce(
+      (total, item) =>
+        total +
+        (Array.isArray(item.handles)
+          ? item.handles.reduce((s, h) => s + (Number(h.quantity) || 0), 0)
+          : 0),
+      0
+    )
+  : 0;
 
-          const itemHandles = Array.isArray(item.handles)
-            ? item.handles.reduce((s, h) => s + (Number(h.quantity) || 0), 0)
-            : 0;
+const lockTotal = Array.isArray(room.locks)
+  ? room.locks.reduce((s, l) => s + (Number(l.quantity) || 0), 0)
+  : 0;
 
-          const itemLocks = Array.isArray(item.locks)
-            ? item.locks.reduce((s, l) => s + (Number(l.quantity) || 0), 0)
-            : 0;
+const itemLockTotal = Array.isArray(room.items)
+  ? room.items.reduce(
+      (total, item) =>
+        total +
+        (Array.isArray(item.locks)
+          ? item.locks.reduce((s, l) => s + (Number(l.quantity) || 0), 0)
+          : 0),
+      0
+    )
+  : 0;
+ 
+const groups = [room.other];
+      return sum + hingeTotal + handleTotal + itemHandleTotal + lockTotal + groups.reduce((s, group) => s + Object.values(group || {}).reduce((a, q) => a + (Number(q) || 0), 0), 0);
+    }, 0);
 
-          return itemSum + itemHinges + itemHandles + itemLocks;
-        }, 0)
-      : 0;
+    const parts = {};
+    rooms.forEach((room) => {
+      if (Array.isArray(room.hinges)) {
+        room.hinges.forEach((hinge) => {
+          const n = Number(hinge.quantity) || 0;
+          if (hinge.type && hinge.size && n > 0) {
+            const item = `${hinge.type} ${hinge.size}`;
+            parts[item] = (parts[item] || 0) + n;
+          }
+        });
+      }
 
-    return sum + roomHingeTotal + roomHandleTotal + roomLockTotal + roomOtherTotal + itemTotal;
-  }, 0);
+      if (Array.isArray(room.handles)) {
+        room.handles.forEach((handle) => {
+          const n = Number(handle.quantity) || 0;
+          if (handle.type && handle.colour && n > 0) {
+            const item = `${handle.colour} ${handle.type}`;
+            parts[item] = (parts[item] || 0) + n;
+          }
+        });
+      }
 
-  const parts = {};
+      if (Array.isArray(room.locks)) {
+  room.locks.forEach((lock) => {
+    const n = Number(lock.quantity) || 0;
 
-  const addPart = (label, qty) => {
-    const n = Number(qty) || 0;
-    if (!label || n <= 0) return;
-    parts[label] = (parts[label] || 0) + n;
-  };
-
-  const lockLabel = (lock) => {
-    if (!lock?.type) return "";
-
-    if (lock.type === "Window Espag Inline" || lock.type === "Window Espag Offset") {
-      return `${lock.type}${lock.backset ? ` - ${lock.backset}` : ""}`;
-    }
-
-    if (lock.type === "Door Mech - Rollers") {
-      return `${lock.type}${lock.rollers ? ` - ${lock.rollers} rollers` : ""}${lock.doorBackset ? ` - ${lock.doorBackset}` : ""}`;
-    }
-
-    if (lock.type === "Door Mech Special") {
-      return `${lock.type}${lock.lockingPoints ? ` - ${lock.lockingPoints} locking points` : ""}${lock.deadbolt ? ` - deadbolt ${lock.deadbolt}` : ""}${lock.doorBackset ? ` - ${lock.doorBackset}` : ""}`;
-    }
-
-    return lock.type;
-  };
-
-  rooms.forEach((room) => {
-    if (Array.isArray(room.hinges)) {
-      room.hinges.forEach((hinge) => {
-        if (hinge.type && hinge.size) {
-          addPart(`${hinge.type} ${hinge.size}`, hinge.quantity);
-        }
-      });
-    }
-
-    if (Array.isArray(room.handles)) {
-      room.handles.forEach((handle) => {
-        if (handle.type && handle.colour) {
-          addPart(`${handle.colour} ${handle.type}`, handle.quantity);
-        }
-      });
-    }
-
-    if (Array.isArray(room.locks)) {
-      room.locks.forEach((lock) => {
-        addPart(lockLabel(lock), lock.quantity);
-      });
-    }
-
-    Object.entries(room.other || {}).forEach(([item, qty]) => {
-      addPart(item, qty);
-    });
-
-    if (Array.isArray(room.items)) {
-      room.items.forEach((item) => {
-        const prefix = item.name || item.type || "Window / Door";
-
-        if (Array.isArray(item.hinges)) {
-          item.hinges.forEach((hinge) => {
-            if (hinge.type && hinge.size) {
-              addPart(`${prefix} - ${hinge.type} ${hinge.size}`, hinge.quantity);
-            }
-          });
-        }
-
-        if (Array.isArray(item.handles)) {
-          item.handles.forEach((handle) => {
-            if (handle.type && handle.colour) {
-              addPart(`${prefix} - ${handle.colour} ${handle.type}`, handle.quantity);
-            }
-          });
-        }
-
-        if (Array.isArray(item.locks)) {
-          item.locks.forEach((lock) => {
-            addPart(`${prefix} - ${lockLabel(lock)}`, lock.quantity);
-          });
-        }
-      });
+    if (lock.type && lock.detail && n > 0) {
+      const item = `${lock.type} ${lock.detail}`;
+      parts[item] = (parts[item] || 0) + n;
     }
   });
+}
+ if (Array.isArray(room.items)) {
+  room.items.forEach((item) => {
 
-  const glassCount = glassRows.filter((g) =>
-    [g.location, g.width, g.height, g.notes].some(Boolean)
-  ).length;
+    if (Array.isArray(item.hinges)) {
+      item.hinges.forEach((hinge) => {
+        const n = Number(hinge.quantity) || 0;
 
-  return {
-    totalHardwareQty,
-    parts,
-    glassCount,
-    photoCount: photos.length,
-  };
-}, [rooms, glassRows, photos]);
+        if (hinge.type && hinge.size && n > 0) {
+          const label = `${item.name || item.type || "Window / Door"} - ${hinge.type} ${hinge.size}`;
+          parts[label] = (parts[label] || 0) + n;
+        }
+      });
+    }
+
+    if (Array.isArray(item.handles)) {
+      item.handles.forEach((handle) => {
+        const n = Number(handle.quantity) || 0;
+
+        if (handle.type && handle.colour && n > 0) {
+          const label = `${item.name || item.type || "Window / Door"} - ${handle.colour} ${handle.type}`;
+          parts[label] = (parts[label] || 0) + n;
+        }
+      });
+    }
+
+    if (Array.isArray(item.locks)) {
+      item.locks.forEach((lock) => {
+        const n = Number(lock.quantity) || 0;
+
+        if (lock.type && n > 0) {
+          let detail = "";
+
+          if (lock.type === "Window Espag Inline" || lock.type === "Window Espag Offset") {
+            detail = lock.backset ? ` - ${lock.backset}` : "";
+          }
+
+          if (lock.type === "Door Mech - Rollers") {
+            detail = `${lock.rollers ? ` - ${lock.rollers} rollers` : ""}${lock.doorBackset ? ` - ${lock.doorBackset}` : ""}`;
+          }
+
+          if (lock.type === "Door Mech Special") {
+            detail = `${lock.lockingPoints ? ` - ${lock.lockingPoints} locking points` : ""}${lock.deadbolt ? ` - deadbolt ${lock.deadbolt}` : ""}${lock.doorBackset ? ` - ${lock.doorBackset}` : ""}`;
+          }
+
+          const label = `${item.name || item.type || "Window / Door"} - ${lock.type}${detail}`;
+          parts[label] = (parts[label] || 0) + n;
+        }
+      });
+    }
+
+  });
+}
+
+[room.other].forEach((group) => {
+        Object.entries(group || {}).forEach(([item, qty]) => {
+          const n = Number(qty) || 0;
+          if (n > 0) parts[item] = (parts[item] || 0) + n;
+        });
+      });
+    });
+
+    const glassCount = glassRows.filter((g) => [g.location, g.width, g.height, g.notes].some(Boolean)).length;
+    return { totalHardwareQty, parts, glassCount, photoCount: photos.length };
+  }, [rooms, glassRows, photos]);
+
+  const saveSurvey = () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(survey));
     alert("Survey saved on this device.");
   };
@@ -1512,6 +1463,20 @@ const removeItemLock = (roomId, itemId, lockId) => {
                   }
                 : item
             ),
+          }
+        : room
+    ),
+  }));
+};
+
+const removeRoomItem = (roomId, itemId) => {
+  setSurvey((prev) => ({
+    ...prev,
+    rooms: prev.rooms.map((room) =>
+      room.id === roomId
+        ? {
+            ...room,
+            items: (Array.isArray(room.items) ? room.items : []).filter((item) => item.id !== itemId),
           }
         : room
     ),
