@@ -507,7 +507,15 @@ function LocksSection({ room, addLock, updateLock, removeLock }) {
   );
 }
 
-function RoomItemsSection({ room, addRoomItem, updateRoomItem, removeRoomItem }) {
+function RoomItemsSection({
+  room,
+  addRoomItem,
+  updateRoomItem,
+  removeRoomItem,
+  addItemHinge,
+  updateItemHinge,
+  removeItemHinge,
+}) {
   const items = Array.isArray(room.items) ? room.items : [];
 
   return (
@@ -571,73 +579,74 @@ function RoomItemsSection({ room, addRoomItem, updateRoomItem, removeRoomItem })
                 />
               </div>
             </div>
-                    
-              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-  <div className="mb-3 flex items-center justify-between gap-3">
-    <h6 className="font-black text-slate-700">Hinges for this Window / Door</h6>
 
-    <button
-      onClick={() => addItemHinge(room.id, item.id)}
-      className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white no-print"
-    >
-      <Plus className="mr-1 inline h-4 w-4" />
-      Add Hinge
-    </button>
-  </div>
+            <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h6 className="font-black text-slate-700">Hinges for this Window / Door</h6>
 
-  {(Array.isArray(item.hinges) ? item.hinges : []).length === 0 && (
-    <p className="rounded-2xl bg-white p-3 text-sm font-bold text-slate-500">
-      No hinges added to this item yet.
-    </p>
-  )}
+                <button
+                  onClick={() => addItemHinge(room.id, item.id)}
+                  className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white no-print"
+                >
+                  <Plus className="mr-1 inline h-4 w-4" />
+                  Add Hinge
+                </button>
+              </div>
 
-  <div className="space-y-3">
-    {(Array.isArray(item.hinges) ? item.hinges : []).map((hinge) => (
-      <div key={hinge.id} className="rounded-2xl bg-white p-3 shadow-sm">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <SelectField
-            label="Hinge Type"
-            value={hinge.type}
-            onChange={(v) => updateItemHinge(room.id, item.id, hinge.id, "type", v)}
-            options={hingeTypeOptions}
-          />
+              {(Array.isArray(item.hinges) ? item.hinges : []).length === 0 && (
+                <p className="rounded-2xl bg-white p-3 text-sm font-bold text-slate-500">
+                  No hinges added to this item yet.
+                </p>
+              )}
 
-          {hinge.type && (
-            <SelectField
-              label="Hinge Size"
-              value={hinge.size}
-              onChange={(v) => updateItemHinge(room.id, item.id, hinge.id, "size", v)}
-              options={["", ...(hingeSizeOptions[hinge.type] || [])]}
-            />
-          )}
+              <div className="space-y-3">
+                {(Array.isArray(item.hinges) ? item.hinges : []).map((hinge) => (
+                  <div key={hinge.id} className="rounded-2xl bg-white p-3 shadow-sm">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                      <SelectField
+                        label="Hinge Type"
+                        value={hinge.type}
+                        onChange={(v) => updateItemHinge(room.id, item.id, hinge.id, "type", v)}
+                        options={hingeTypeOptions}
+                      />
 
-          {hinge.size && (
-            <Field
-              label="Quantity"
-              value={hinge.quantity}
-              onChange={(v) => updateItemHinge(room.id, item.id, hinge.id, "quantity", v)}
-              inputMode="numeric"
-              placeholder="Qty"
-            />
-          )}
-        </div>
+                      {hinge.type && (
+                        <SelectField
+                          label="Hinge Size"
+                          value={hinge.size}
+                          onChange={(v) => updateItemHinge(room.id, item.id, hinge.id, "size", v)}
+                          options={["", ...(hingeSizeOptions[hinge.type] || [])]}
+                        />
+                      )}
 
-        <button
-          onClick={() => removeItemHinge(room.id, item.id, hinge.id)}
-          className="mt-3 rounded-2xl border border-slate-200 px-3 py-2 text-sm font-bold text-red-600 no-print"
-        >
-          <Trash2 className="mr-1 inline h-4 w-4" />
-          Remove Hinge
-        </button>
-      </div>
-    ))}
-  </div>
-</div>
-            </div>      
+                      {hinge.size && (
+                        <Field
+                          label="Quantity"
+                          value={hinge.quantity}
+                          onChange={(v) => updateItemHinge(room.id, item.id, hinge.id, "quantity", v)}
+                          inputMode="numeric"
+                          placeholder="Qty"
+                        />
+                      )}
+                    </div>
+
+                    <button
+                      onClick={() => removeItemHinge(room.id, item.id, hinge.id)}
+                      className="mt-3 rounded-2xl border border-slate-200 px-3 py-2 text-sm font-bold text-red-600 no-print"
+                    >
+                      <Trash2 className="mr-1 inline h-4 w-4" />
+                      Remove Hinge
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         ))}
       </div>
     </div>
+  );
+}
 
 
 function downloadTextFile(filename, content, type = "application/json") {
@@ -1322,6 +1331,9 @@ const removeRoomItem = (roomId, itemId) => {
   addRoomItem={addRoomItem}
   updateRoomItem={updateRoomItem}
   removeRoomItem={removeRoomItem}
+  addItemHinge={addItemHinge}
+  updateItemHinge={updateItemHinge}
+  removeItemHinge={removeItemHinge}
 />
                     
                 <HingesSection room={activeRoom} addHinge={addHinge} updateHinge={updateHinge} removeHinge={removeHinge} />
