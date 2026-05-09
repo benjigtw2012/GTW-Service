@@ -798,12 +798,22 @@ export default function MobileWindowDoorSurveyApp() {
     const totalHardwareQty = rooms.reduce((sum, room) => {
       const hingeTotal = Array.isArray(room.hinges) ? room.hinges.reduce((s, h) => s + (Number(h.quantity) || 0), 0) : 0;
       const handleTotal = Array.isArray(room.handles) ? room.handles.reduce((s, h) => s + (Number(h.quantity) || 0), 0) : 0;
+      const itemHandleTotal = Array.isArray(room.items)
+  ? room.items.reduce(
+      (total, item) =>
+        total +
+        (Array.isArray(item.handles)
+          ? item.handles.reduce((s, h) => s + (Number(h.quantity) || 0), 0)
+          : 0),
+      0
+    )
+  : 0;
       const lockTotal = Array.isArray(room.locks)
   ? room.locks.reduce((s, l) => s + (Number(l.quantity) || 0), 0)
   : 0;
 
 const groups = [room.other];
-      return sum + hingeTotal + handleTotal + lockTotal + groups.reduce((s, group) => s + Object.values(group || {}).reduce((a, q) => a + (Number(q) || 0), 0), 0);
+      return sum + hingeTotal + handleTotal + itemHandleTotal + lockTotal + groups.reduce((s, group) => s + Object.values(group || {}).reduce((a, q) => a + (Number(q) || 0), 0), 0);
     }, 0);
 
     const parts = {};
@@ -838,6 +848,20 @@ const groups = [room.other];
     }
   });
 }
+   if (Array.isArray(room.items)) {
+  room.items.forEach((item) => {
+    if (Array.isArray(item.handles)) {
+      item.handles.forEach((handle) => {
+        const n = Number(handle.quantity) || 0;
+
+        if (handle.type && handle.colour && n > 0) {
+          const label = `${item.name || item.type || "Window / Door"} - ${handle.colour} ${handle.type}`;
+          parts[label] = (parts[label] || 0) + n;
+        }
+      });
+    }
+  });
+}   
 
 [room.other].forEach((group) => {
         Object.entries(group || {}).forEach(([item, qty]) => {
