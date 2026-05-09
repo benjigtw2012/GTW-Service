@@ -534,7 +534,13 @@ function getHardwareLines(room) {
     if (entries.length) lines.push(`${name}: ${entries.map(([item, qty]) => `${item} x ${qty}`).join(", ")}`);
   };
 
-  addGroup("Locks", room.locks);
+  if (Array.isArray(room.locks)) {
+  const locks = room.locks.filter((l) => l.type && l.detail && Number(l.quantity) > 0);
+
+  if (locks.length) {
+    lines.push(`Locks: ${locks.map((l) => `${l.type} ${l.detail} x ${l.quantity}`).join(", ")}`);
+  }
+}
   addGroup("Other", room.other);
   if (room.notes) lines.push(`Notes: ${room.notes}`);
   return lines;
@@ -580,8 +586,12 @@ export default function MobileWindowDoorSurveyApp() {
     const totalHardwareQty = rooms.reduce((sum, room) => {
       const hingeTotal = Array.isArray(room.hinges) ? room.hinges.reduce((s, h) => s + (Number(h.quantity) || 0), 0) : 0;
       const handleTotal = Array.isArray(room.handles) ? room.handles.reduce((s, h) => s + (Number(h.quantity) || 0), 0) : 0;
-      const groups = [room.locks, room.other];
-      return sum + hingeTotal + handleTotal + groups.reduce((s, group) => s + Object.values(group || {}).reduce((a, q) => a + (Number(q) || 0), 0), 0);
+      const lockTotal = Array.isArray(room.locks)
+  ? room.locks.reduce((s, l) => s + (Number(l.quantity) || 0), 0)
+  : 0;
+
+const groups = [room.other];
+      return sum + hingeTotal + handleTotal + lockTotal + groups.reduce((s, group) => s + Object.values(group || {}).reduce((a, q) => a + (Number(q) || 0), 0), 0);
     }, 0);
 
     const parts = {};
@@ -606,7 +616,18 @@ export default function MobileWindowDoorSurveyApp() {
         });
       }
 
-      [room.locks, room.other].forEach((group) => {
+      if (Array.isArray(room.locks)) {
+  room.locks.forEach((lock) => {
+    const n = Number(lock.quantity) || 0;
+
+    if (lock.type && lock.detail && n > 0) {
+      const item = `${lock.type} ${lock.detail}`;
+      parts[item] = (parts[item] || 0) + n;
+    }
+  });
+}
+
+[room.other].forEach((group) => {
         Object.entries(group || {}).forEach(([item, qty]) => {
           const n = Number(qty) || 0;
           if (n > 0) parts[item] = (parts[item] || 0) + n;
