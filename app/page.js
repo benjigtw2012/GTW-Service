@@ -515,6 +515,9 @@ function RoomItemsSection({
   addItemHinge,
   updateItemHinge,
   removeItemHinge,
+    addItemHandle,
+  updateItemHandle,
+  removeItemHandle,
 }) {
   const items = Array.isArray(room.items) ? room.items : [];
 
@@ -641,6 +644,70 @@ function RoomItemsSection({
                 ))}
               </div>
             </div>
+                  
+          <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+  <div className="mb-3 flex items-center justify-between gap-3">
+    <h6 className="font-black text-slate-700">Handles for this Window / Door</h6>
+
+    <button
+      onClick={() => addItemHandle(room.id, item.id)}
+      className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white no-print"
+    >
+      <Plus className="mr-1 inline h-4 w-4" />
+      Add Handle
+    </button>
+  </div>
+
+  {(Array.isArray(item.handles) ? item.handles : []).length === 0 && (
+    <p className="rounded-2xl bg-white p-3 text-sm font-bold text-slate-500">
+      No handles added to this item yet.
+    </p>
+  )}
+
+  <div className="space-y-3">
+    {(Array.isArray(item.handles) ? item.handles : []).map((handle) => (
+      <div key={handle.id} className="rounded-2xl bg-white p-3 shadow-sm">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+
+          <SelectField
+            label="Handle Type"
+            value={handle.type}
+            onChange={(v) => updateItemHandle(room.id, item.id, handle.id, "type", v)}
+            options={handleTypeOptions}
+          />
+
+          {handle.type && (
+            <SelectField
+              label="Colour"
+              value={handle.colour}
+              onChange={(v) => updateItemHandle(room.id, item.id, handle.id, "colour", v)}
+              options={["", ...(handleColourOptions[handle.type] || [])]}
+            />
+          )}
+
+          {handle.colour && (
+            <Field
+              label="Quantity"
+              value={handle.quantity}
+              onChange={(v) => updateItemHandle(room.id, item.id, handle.id, "quantity", v)}
+              inputMode="numeric"
+              placeholder="Qty"
+            />
+          )}
+        </div>
+
+        <button
+          onClick={() => removeItemHandle(room.id, item.id, handle.id)}
+          className="mt-3 rounded-2xl border border-slate-200 px-3 py-2 text-sm font-bold text-red-600 no-print"
+        >
+          <Trash2 className="mr-1 inline h-4 w-4" />
+          Remove Handle
+        </button>
+      </div>
+    ))}
+  </div>
+</div>
+                  
           </div>
         ))}
       </div>
@@ -1147,6 +1214,88 @@ const removeItemHinge = (roomId, itemId, hingeId) => {
     ),
   }));
 }; 
+ const addItemHandle = (roomId, itemId) => {
+  setSurvey((prev) => ({
+    ...prev,
+    rooms: prev.rooms.map((room) =>
+      room.id === roomId
+        ? {
+            ...room,
+            items: (Array.isArray(room.items) ? room.items : []).map((item) =>
+              item.id === itemId
+                ? {
+                    ...item,
+                    handles: [
+                      ...(Array.isArray(item.handles) ? item.handles : []),
+                      { id: makeId(), type: "", colour: "", quantity: "" },
+                    ],
+                  }
+                : item
+            ),
+          }
+        : room
+    ),
+  }));
+};
+
+const updateItemHandle = (roomId, itemId, handleId, key, value) => {
+  setSurvey((prev) => ({
+    ...prev,
+    rooms: prev.rooms.map((room) =>
+      room.id === roomId
+        ? {
+            ...room,
+            items: (Array.isArray(room.items) ? room.items : []).map((item) =>
+              item.id === itemId
+                ? {
+                    ...item,
+                    handles: (Array.isArray(item.handles) ? item.handles : []).map((handle) => {
+                      if (handle.id !== handleId) return handle;
+
+                      const updated = { ...handle, [key]: value };
+
+                      if (key === "type") {
+                        updated.colour = "";
+                        updated.quantity = "";
+                      }
+
+                      if (key === "colour") {
+                        updated.quantity = "";
+                      }
+
+                      return updated;
+                    }),
+                  }
+                : item
+            ),
+          }
+        : room
+    ),
+  }));
+};
+
+const removeItemHandle = (roomId, itemId, handleId) => {
+  setSurvey((prev) => ({
+    ...prev,
+    rooms: prev.rooms.map((room) =>
+      room.id === roomId
+        ? {
+            ...room,
+            items: (Array.isArray(room.items) ? room.items : []).map((item) =>
+              item.id === itemId
+                ? {
+                    ...item,
+                    handles: (Array.isArray(item.handles) ? item.handles : []).filter(
+                      (handle) => handle.id !== handleId
+                    ),
+                  }
+                : item
+            ),
+          }
+        : room
+    ),
+  }));
+};
 
 const removeRoomItem = (roomId, itemId) => {
   setSurvey((prev) => ({
@@ -1334,6 +1483,9 @@ const removeRoomItem = (roomId, itemId) => {
   addItemHinge={addItemHinge}
   updateItemHinge={updateItemHinge}
   removeItemHinge={removeItemHinge}
+      addItemHandle={addItemHandle}
+  updateItemHandle={updateItemHandle}
+  removeItemHandle={removeItemHandle}
 />
                     
                 <HingesSection room={activeRoom} addHinge={addHinge} updateHinge={updateHinge} removeHinge={removeHinge} />
