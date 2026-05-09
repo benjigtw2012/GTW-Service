@@ -933,9 +933,6 @@ return (
           if (n > 0) parts[item] = (parts[item] || 0) + n;
         });
       });
-    });
-
-   });
 
     const glassCount = glassRows.filter((g) => [g.location, g.width, g.height, g.notes].some(Boolean)).length;
     return { totalHardwareQty, parts, glassCount, photoCount: photos.length };
