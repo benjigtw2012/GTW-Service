@@ -41,15 +41,17 @@ const handleColourOptions = {
 
 const lockTypeOptions = [
   "",
-  "Multipoint Lock",
-  "Gearbox Only",
-  "Window Lock",
-  "Shootbolt Gearbox",
-  "Espag Mechanism",
-  "Door Cylinder",
-  "Patio Door Lock",
-  "Other Lock / Mechanism",
+  "Window Espag Inline",
+  "Window Espag Offset",
+  "Door Mech - Rollers",
+  "Door Mech Special",
 ];
+
+const lockBacksetOptions = ["", "20mm", "22mm"];
+
+const doorRollerOptions = ["", "2", "4"];
+
+const doorBacksetOptions = ["", "28mm", "30mm", "32mm", "35mm", "Other"];
 
 const lockDetailOptions = {
   "Multipoint Lock": ["GU", "Yale", "Mila", "Fullex", "Other"],
@@ -518,6 +520,9 @@ function RoomItemsSection({
     addItemHandle,
   updateItemHandle,
   removeItemHandle,
+    addItemLock,
+  updateItemLock,
+  removeItemLock,
 }) {
   const items = Array.isArray(room.items) ? room.items : [];
 
@@ -703,12 +708,138 @@ function RoomItemsSection({
           <Trash2 className="mr-1 inline h-4 w-4" />
           Remove Handle
         </button>
+            <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+  <div className="mb-3 flex items-center justify-between gap-3">
+    <h6 className="font-black text-slate-700">Locks for this Window / Door</h6>
+
+    <button
+      onClick={() => addItemLock(room.id, item.id)}
+      className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white no-print"
+    >
+      <Plus className="mr-1 inline h-4 w-4" />
+      Add Lock
+    </button>
+  </div>
+
+  {(Array.isArray(item.locks) ? item.locks : []).length === 0 && (
+    <p className="rounded-2xl bg-white p-3 text-sm font-bold text-slate-500">
+      No locks added to this item yet.
+    </p>
+  )}
+
+  <div className="space-y-3">
+    {(Array.isArray(item.locks) ? item.locks : []).map((lock) => (
+      <div key={lock.id} className="rounded-2xl bg-white p-3 shadow-sm">
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+
+          <SelectField
+            label="Lock Type"
+            value={lock.type}
+            onChange={(v) => updateItemLock(room.id, item.id, lock.id, "type", v)}
+            options={lockTypeOptions}
+          />
+
+          {(lock.type === "Window Espag Inline" || lock.type === "Window Espag Offset") && (
+            <>
+              <SelectField
+                label="Backset"
+                value={lock.backset}
+                onChange={(v) => updateItemLock(room.id, item.id, lock.id, "backset", v)}
+                options={lockBacksetOptions}
+              />
+
+              <Field
+                label="Quantity"
+                value={lock.quantity}
+                onChange={(v) => updateItemLock(room.id, item.id, lock.id, "quantity", v)}
+                inputMode="numeric"
+                placeholder="Qty"
+              />
+            </>
+          )}
+
+          {lock.type === "Door Mech - Rollers" && (
+            <>
+              <SelectField
+                label="Rollers"
+                value={lock.rollers}
+                onChange={(v) => updateItemLock(room.id, item.id, lock.id, "rollers", v)}
+                options={doorRollerOptions}
+              />
+
+              <SelectField
+                label="Backset"
+                value={lock.doorBackset}
+                onChange={(v) => updateItemLock(room.id, item.id, lock.id, "doorBackset", v)}
+                options={doorBacksetOptions}
+              />
+
+              <Field
+                label="Quantity"
+                value={lock.quantity}
+                onChange={(v) => updateItemLock(room.id, item.id, lock.id, "quantity", v)}
+                inputMode="numeric"
+                placeholder="Qty"
+              />
+            </>
+          )}
+
+          {lock.type === "Door Mech Special" && (
+            <>
+              <Field
+                label="Locking Points"
+                value={lock.lockingPoints}
+                onChange={(v) => updateItemLock(room.id, item.id, lock.id, "lockingPoints", v)}
+              />
+
+              <Field
+                label="Deadbolt"
+                value={lock.deadbolt}
+                onChange={(v) => updateItemLock(room.id, item.id, lock.id, "deadbolt", v)}
+              />
+
+              <Field
+                label="Backset"
+                value={lock.doorBackset}
+                onChange={(v) => updateItemLock(room.id, item.id, lock.id, "doorBackset", v)}
+              />
+
+              <Field
+                label="Quantity"
+                value={lock.quantity}
+                onChange={(v) => updateItemLock(room.id, item.id, lock.id, "quantity", v)}
+                inputMode="numeric"
+                placeholder="Qty"
+              />
+            </>
+          )}
+
+        </div>
+
+        {lock.type === "Door Mech Special" && (
+          <div className="mt-3">
+            <TextArea
+              label="Special Notes"
+              value={lock.specialNotes}
+              onChange={(v) => updateItemLock(room.id, item.id, lock.id, "specialNotes", v)}
+              placeholder="Any identifying information for sourcing"
+            />
+          </div>
+        )}
+
+        <button
+          onClick={() => removeItemLock(room.id, item.id, lock.id)}
+          className="mt-3 rounded-2xl border border-slate-200 px-3 py-2 text-sm font-bold text-red-600 no-print"
+        >
+          <Trash2 className="mr-1 inline h-4 w-4" />
+          Remove Lock
+        </button>
       </div>
     ))}
   </div>
-</div>
-                  
-          </div>
+
+                </div>
         ))}
       </div>
     </div>
@@ -1345,6 +1476,97 @@ const removeItemHandle = (roomId, itemId, handleId) => {
     ),
   }));
 };
+  const addItemLock = (roomId, itemId) => {
+  setSurvey((prev) => ({
+    ...prev,
+    rooms: prev.rooms.map((room) =>
+      room.id === roomId
+        ? {
+            ...room,
+            items: (Array.isArray(room.items) ? room.items : []).map((item) =>
+              item.id === itemId
+                ? {
+                    ...item,
+                    locks: [
+                      ...(Array.isArray(item.locks) ? item.locks : []),
+                      {
+                        id: makeId(),
+                        type: "",
+                        backset: "",
+                        rollers: "",
+                        doorBackset: "",
+                        lockingPoints: "",
+                        deadbolt: "",
+                        specialNotes: "",
+                        quantity: "",
+                      },
+                    ],
+                  }
+                : item
+            ),
+          }
+        : room
+    ),
+  }));
+};
+
+const updateItemLock = (roomId, itemId, lockId, key, value) => {
+  setSurvey((prev) => ({
+    ...prev,
+    rooms: prev.rooms.map((room) =>
+      room.id === roomId
+        ? {
+            ...room,
+            items: (Array.isArray(room.items) ? room.items : []).map((item) =>
+              item.id === itemId
+                ? {
+                    ...item,
+                    locks: (Array.isArray(item.locks) ? item.locks : []).map((lock) => {
+                      if (lock.id !== lockId) return lock;
+
+                      const updated = { ...lock, [key]: value };
+
+                      if (key === "type") {
+                        updated.backset = "";
+                        updated.rollers = "";
+                        updated.doorBackset = "";
+                        updated.lockingPoints = "";
+                        updated.deadbolt = "";
+                        updated.specialNotes = "";
+                        updated.quantity = "";
+                      }
+
+                      return updated;
+                    }),
+                  }
+                : item
+            ),
+          }
+        : room
+    ),
+  }));
+};
+
+const removeItemLock = (roomId, itemId, lockId) => {
+  setSurvey((prev) => ({
+    ...prev,
+    rooms: prev.rooms.map((room) =>
+      room.id === roomId
+        ? {
+            ...room,
+            items: (Array.isArray(room.items) ? room.items : []).map((item) =>
+              item.id === itemId
+                ? {
+                    ...item,
+                    locks: (Array.isArray(item.locks) ? item.locks : []).filter((lock) => lock.id !== lockId),
+                  }
+                : item
+            ),
+          }
+        : room
+    ),
+  }));
+};
 
 const removeRoomItem = (roomId, itemId) => {
   setSurvey((prev) => ({
@@ -1535,6 +1757,9 @@ const removeRoomItem = (roomId, itemId) => {
       addItemHandle={addItemHandle}
   updateItemHandle={updateItemHandle}
   removeItemHandle={removeItemHandle}
+      addItemLock={addItemLock}
+  updateItemLock={updateItemLock}
+  removeItemLock={removeItemLock}
 />
                     
             
