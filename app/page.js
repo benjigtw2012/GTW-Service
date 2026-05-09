@@ -53,17 +53,6 @@ const doorRollerOptions = ["", "2", "4"];
 
 const doorBacksetOptions = ["", "28mm", "30mm", "32mm", "35mm", "Other"];
 
-const lockDetailOptions = {
-  "Multipoint Lock": ["GU", "Yale", "Mila", "Fullex", "Other"],
-  "Gearbox Only": ["35mm", "45mm", "55mm", "Other"],
-  "Window Lock": ["Inline", "Offset", "Cockspur", "Other"],
-  "Shootbolt Gearbox": ["Mila", "Saracen", "Other"],
-  "Espag Mechanism": ["200mm", "400mm", "600mm", "Other"],
-  "Door Cylinder": ["Euro", "Thumbturn", "Anti Snap", "Other"],
-  "Patio Door Lock": ["Hook", "Slider", "Other"],
-  "Other Lock / Mechanism": ["Other"],
-};
-
 const roomItemTypeOptions = ["", "Window", "Door", "French Door", "Patio Door", "Composite Door", "Other"];
 
 const otherItems = [
@@ -438,76 +427,6 @@ function HandlesSection({ room, addHandle, updateHandle, removeHandle }) {
   );
 }
 
-function LocksSection({ room, addLock, updateLock, removeLock }) {
-  const locks = Array.isArray(room.locks) ? room.locks : [];
-  
-  return (
-    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <h4 className="text-base font-black uppercase tracking-wide text-slate-700">
-          Locks / Mechanisms
-        </h4>
-
-        <button
-          onClick={() => addLock(room.id)}
-          className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white no-print"
-        >
-          <Plus className="mr-1 inline h-4 w-4" />
-          Add Lock
-        </button>
-      </div>
-
-      {locks.length === 0 && (
-        <p className="rounded-2xl bg-white p-4 text-sm font-bold text-slate-500">
-          No locks added yet.
-        </p>
-      )}
-
-      <div className="space-y-3">
-        {locks.map((lock) => (
-          <div key={lock.id} className="rounded-2xl bg-white p-4 shadow-sm">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-
-              <SelectField
-                label="Lock Type"
-                value={lock.type}
-                onChange={(v) => updateLock(room.id, lock.id, "type", v)}
-                options={lockTypeOptions}
-              />
-
-              {lock.type && (
-                <SelectField
-                  label="Detail"
-                  value={lock.detail}
-                  onChange={(v) => updateLock(room.id, lock.id, "detail", v)}
-                  options={["", ...(lockDetailOptions[lock.type] || [])]}
-                />
-              )}
-
-              {lock.detail && (
-                <Field
-                  label="Quantity"
-                  value={lock.quantity}
-                  onChange={(v) => updateLock(room.id, lock.id, "quantity", v)}
-                  inputMode="numeric"
-                  placeholder="Qty"
-                />
-              )}
-            </div>
-
-            <button
-              onClick={() => removeLock(room.id, lock.id)}
-              className="mt-3 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-bold text-red-600 no-print"
-            >
-              <Trash2 className="mr-1 inline h-4 w-4" />
-              Remove Lock
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 function RoomItemsSection({
   room,
